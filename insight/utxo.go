@@ -23,6 +23,7 @@ type UTXO struct {
 func GetUnspentOutputs(publicKey string) []*UTXO {
 	insightExplorer := "https://explorer.viacoin.org/api"
 	url := fmt.Sprintf("%s/addr/%s/utxo", insightExplorer, publicKey)
+	fmt.Println(url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -41,7 +42,7 @@ func GetUnspentOutputs(publicKey string) []*UTXO {
 
 	var utxos insightjson.UnspentOutputs
 	if err := json.NewDecoder(resp.Body).Decode(&utxos); err != nil {
-		log.Printf("error decoding viacoin insightjson utxo: %s\n", err)
+		log.Fatalf("error decoding viacoin insightjson utxo: %s\n", err)
 	}
 
 	var sourceUTXOs []*UTXO

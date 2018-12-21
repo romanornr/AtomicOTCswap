@@ -218,7 +218,7 @@ func fundRawTransaction(tx *wire.MsgTx, cmd initiateCmd, feePerKb btcutil.Amount
 
 	//sourceAddress, _ := btcutil.DecodeAddress(sourceAddr, &chaincfg.MainNetParams)
 	sourceAddress, _ := GenerateNewPublicKey(*cmd.wif)
-	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.String())
+	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.AddressPubKeyHash().String())
 	sourceUTXOs := insight.GetMinimalRequiredUTXO(AmountPaymentSat, unspentOutputs)
 	availableAmountToSpend := int64(0) // amount in UTXO available
 
