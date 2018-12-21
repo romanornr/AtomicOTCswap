@@ -3,12 +3,13 @@ package insight
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/romanornr/CryptoTwitterTipBot/insightjson"
-	"github.com/viacoin/viad/chaincfg/chainhash"
 	"log"
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/romanornr/CryptoTwitterTipBot/insightjson"
+	"github.com/viacoin/viad/chaincfg/chainhash"
 )
 
 type UTXO struct {
@@ -82,7 +83,7 @@ func getMinimalRequiredUTXOByFirstInFirstOut(requiredAmount int64, sourceUTXOs [
 //however we don't want to use all utxo's we have on our address
 //only the minimal utxo's combined is what we want so the transaction becomes smaller in bytes
 //the smaller the transaction, the less fees is required
-func getMinimalRequiredUTXO(requiredAmount int64, sourceUTXOs []*UTXO) []*UTXO {
+func GetMinimalRequiredUTXO(requiredAmount int64, sourceUTXOs []*UTXO) []*UTXO {
 	var newUTXOSet []*UTXO
 	var amountSatInUTXOset int64
 

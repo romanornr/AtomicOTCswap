@@ -6,6 +6,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/romanornr/AtomicOTCswap/insight"
+	"time"
+
 	"github.com/btcsuite/golangcrypto/ripemd160"
 	"github.com/go-errors/errors"
 	"github.com/viacoin/viad/chaincfg"
@@ -13,7 +16,6 @@ import (
 	"github.com/viacoin/viad/txscript"
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
-	"time"
 )
 
 const (
@@ -28,6 +30,8 @@ const (
 
 type initiateCmd struct {
 	counterparty2Addr *btcutil.AddressPubKeyHash
+	refundAddr	*btcutil.AddressPubKeyHash
+	wif *btcutil.WIF
 	amount            btcutil.Amount
 }
 
@@ -63,7 +67,7 @@ type contractArgs struct {
 	secretHash []byte
 }
 
-func Initiate(participantAddr string, refundAddr string, amount float64) error {
+func Initiate(participantAddr string, refundAddress string, wif *btcutil.WIF, amount float64) error {
 	counterparty2Addr, err := btcutil.DecodeAddress(participantAddr, &chaincfg.MainNetParams)
 	if err != nil {
 		return fmt.Errorf("failed to decode the address from the participant: %s", err)
@@ -79,16 +83,21 @@ func Initiate(participantAddr string, refundAddr string, amount float64) error {
 		return err
 	}
 
-	refundAddress, err := btcutil.DecodeAddress(refundAddr, &chaincfg.MainNetParams)
+	refundAddr, err := btcutil.DecodeAddress(refundAddress, &chaincfg.MainNetParams)
 	if err != nil {
 		return fmt.Errorf("failed to decode the refund address: %s", err)
 	}
 
-	cmd := &initiateCmd{counterparty2Addr: counterparty2AddrP2KH, amount: amount2}
-	return cmd.runCommand(refundAddress)
+	refundAddrP2KH, ok := refundAddr.(*btcutil.AddressPubKeyHash)
+	if !ok {
+		return errors.New("participant address is not P2KH")
+	}
+
+	cmd := &initiateCmd{counterparty2Addr: counterparty2AddrP2KH, refundAddr: refundAddrP2KH, wif: wif, amount: amount2}
+	return cmd.runCommand()
 }
 
-func (cmd *initiateCmd) runCommand(refundAddr btcutil.Address) error {
+func (cmd *initiateCmd) runCommand() error {
 	var secret [secretSize]byte
 	_, err := rand.Read(secret[:])
 	if err != nil {
@@ -96,22 +105,20 @@ func (cmd *initiateCmd) runCommand(refundAddr btcutil.Address) error {
 	}
 
 	secretHash := sha256Hash(secret[:])
-	locktime := time.Now().Add(10 * time.Minute).Unix() // NEED TO CHANGE TO 48 HOURS
+	locktime := time.Now().Add(10 * time.Minute).Unix() // NEED TO CHANGE
 
-
-	build, err := buildContract(&contractArgs {
+	build, err := buildContract(&contractArgs{
 		them:       cmd.counterparty2Addr,
 		amount:     cmd.amount,
 		locktime:   locktime,
 		secretHash: secretHash,
-	}, refundAddr)
+	}, cmd)
 
 	if err != nil {
 		return err
 	}
 
 	refundTxHash := build.refundTx.TxHash()
-
 
 	fmt.Printf("Secret:      %x\n", secret)
 	fmt.Printf("Secret hash: %x\n\n", secretHash)
@@ -143,11 +150,9 @@ type builtContract struct {
 	refundFee      btcutil.Amount
 }
 
+func buildContract(args *contractArgs, cmd *initiateCmd) (*builtContract, error) {
 
-
-func buildContract(args *contractArgs, refundAddr btcutil.Address) (*builtContract, error) {
-
-	//refundAddr, _ := btcutil.DecodeAddress("VdMPvn7vUTSzbYjiMDs1jku9wAh1Ri2Y1A", &chaincfg.MainNetParams)
+	refundAddr, _ := btcutil.DecodeAddress(cmd.refundAddr.String(), &chaincfg.MainNetParams)
 
 	refundAddrHash, ok := refundAddr.(interface {
 		Hash160() *[ripemd160.Size]byte
@@ -156,7 +161,7 @@ func buildContract(args *contractArgs, refundAddr btcutil.Address) (*builtContra
 	if !ok {
 		return nil, errors.New("unable to create hash160 from change address")
 	}
-	contract, err  := atomicSwapContract(refundAddrHash.Hash160(), args.them.Hash160(), args.locktime, args.secretHash)
+	contract, err := atomicSwapContract(refundAddrHash.Hash160(), args.them.Hash160(), args.locktime, args.secretHash)
 	if err != nil {
 		return nil, err
 	}
@@ -169,11 +174,11 @@ func buildContract(args *contractArgs, refundAddr btcutil.Address) (*builtContra
 		return nil, err
 	}
 	feePerKb, _ := btcutil.NewAmount(0.01)
-    //minFeePerKb, _ := btcutil.NewAmount(0.02)
+	//minFeePerKb, _ := btcutil.NewAmount(0.02)
 
 	unsignedContract := wire.NewMsgTx(txVersion)
 	unsignedContract.AddTxOut(wire.NewTxOut(int64(args.amount), contractP2SHPkScript))
-	unsignedContract, contractFee, err := fundRawTransaction(unsignedContract, feePerKb)
+	unsignedContract, contractFee, err := fundRawTransaction(unsignedContract, *cmd, feePerKb)
 	if err != nil {
 		return nil, fmt.Errorf("funded raw transaction: %v\n", err)
 	}
@@ -193,8 +198,7 @@ func buildContract(args *contractArgs, refundAddr btcutil.Address) (*builtContra
 	//	return nil, err
 	//}
 
-	refundFee, _  := btcutil.NewAmount(0.001)
-
+	refundFee, _ := btcutil.NewAmount(0.001)
 
 	return &builtContract{
 		contract,
@@ -208,10 +212,28 @@ func buildContract(args *contractArgs, refundAddr btcutil.Address) (*builtContra
 	}, nil
 }
 
-func fundRawTransaction(tx *wire.MsgTx, feePerKb btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, err error) {
+var AmountPaymentSat = int64(2.09 * 10000000)
+
+func fundRawTransaction(tx *wire.MsgTx, cmd initiateCmd, feePerKb btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, err error) {
+
+	//sourceAddress, _ := btcutil.DecodeAddress(sourceAddr, &chaincfg.MainNetParams)
+	sourceAddress, _ := GenerateNewPublicKey(*cmd.wif)
+	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.String())
+	sourceUTXOs := insight.GetMinimalRequiredUTXO(AmountPaymentSat, unspentOutputs)
+	availableAmountToSpend := int64(0) // amount in UTXO available
+
+	for idx := range sourceUTXOs {
+		availableAmountToSpend += sourceUTXOs[idx].Amount
+		sourceUTXO := wire.NewOutPoint(sourceUTXOs[idx].Hash, sourceUTXOs[idx].TxIndex)
+		sourceTxIn := wire.NewTxIn(sourceUTXO, nil, nil)
+		tx.AddTxIn(sourceTxIn)
+	}
+
 	var buf bytes.Buffer
 	buf.Grow(tx.SerializeSize())
+	fmt.Println(tx.SerializeSize())
 	tx.Serialize(&buf)
+
 
 	//param0 := hex.EncodeToString(buf.Bytes())
 	//param0, err := json.Marshal(hex.EncodeToString(buf.Bytes()))
@@ -225,9 +247,9 @@ func fundRawTransaction(tx *wire.MsgTx, feePerKb btcutil.Amount) (fundedTx *wire
 	//	FeeRate: feePerKb.ToBTC(),
 	//})
 
-	var funded struct{
-		Hex string `json:"hex"`
-		Fee float64 `json:"fee"`
+	var funded struct {
+		Hex       string  `json:"hex"`
+		Fee       float64 `json:"fee"`
 		ChangePos float64 `json:"chane_pos"`
 	}
 	//x := hex.EncodeToString(buf.Bytes())
@@ -315,7 +337,6 @@ func atomicSwapContract(pkhMe, pkhThem *[ripemd160.Size]byte, locktime int64, se
 	builder.AddOp(txscript.OP_CHECKSIG)
 	return builder.Script()
 }
-
 
 func sha256Hash(x []byte) []byte {
 	hash := sha256.Sum256(x)
