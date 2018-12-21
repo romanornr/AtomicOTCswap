@@ -27,6 +27,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:6dbeec60ae049198a640f2491ed98d97da50763b12e674c6b35adc11312e6c67"
+  name = "github.com/romanornr/CryptoTwitterTipBot"
+  packages = ["insightjson"]
+  pruneopts = "UT"
+  revision = "94a025c04e2f70a0ad2fc1b0af94c2226d9d025b"
+
+[[projects]]
+  branch = "master"
   digest = "1:6c1d8b88e2fddb7af2f3a38640ff30703adf5ed3c6c21e60454be6f044ea8391"
   name = "github.com/viacoin/viad"
   packages = [
@@ -69,6 +77,8 @@
   input-imports = [
     "github.com/btcsuite/golangcrypto/ripemd160",
     "github.com/go-errors/errors",
+    "github.com/romanornr/CryptoTwitterTipBot/insightjson",
+    "github.com/viacoin/viad/btcec",
     "github.com/viacoin/viad/chaincfg",
     "github.com/viacoin/viad/chaincfg/chainhash",
     "github.com/viacoin/viad/txscript",

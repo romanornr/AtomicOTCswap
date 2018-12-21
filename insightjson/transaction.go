@@ -1,8 +1,5 @@
 package insightjson
 
-
-package insightjson
-
 type Tx struct {
 	Txid          string  `json:"txid,omitempty"`
 	Version       int32   `json:"version,omitempty"`
