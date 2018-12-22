@@ -3,14 +3,20 @@ package main
 import (
 	"fmt"
 	"github.com/romanornr/AtomicOTCswap/atomic"
+	"github.com/viacoin/viautil"
 )
 func main() {
-	initiatorWIF, _ := atomic.GenerateNewWIF()
-	//initiatorRefundAddr, _ := atomic.GenerateNewPublicKey(*initiatorRefundWIF)
+	//initiatorWIF, _ := atomic.GenerateNewWIF()
 	partyBAddress := "VdMPvn7vUTSzbYjiMDs1jku9wAh1Ri2Y1A"
 
+	//fmt.Println(initiatorWIF.String())
 
-	err := atomic.Initiate(partyBAddress, "VdMPvn7vUTSzbYjiMDs1jku9wAh1Ri2Y1A", initiatorWIF, 2.09)
+	wif, _ := viautil.DecodeWIF("WVtSmyCEuUNeXgPEnC4uEPJPRswpCjS2uUCe6wykRaYEBre9Y4fX")
+	pk, _ := atomic.GenerateNewPublicKey(*wif)
+	fmt.Printf("public key to deposit 0.001 on: %s\n", pk.AddressPubKeyHash())
+
+	err := atomic.Initiate(partyBAddress, "Vcoj1ZR4MW7QzVMag3jcZdUXJFAQQtHX7e", wif, 0.001)
+
 	if err != nil {
 		fmt.Printf("%s", err)
 	}

@@ -105,7 +105,7 @@ func (cmd *initiateCmd) runCommand() error {
 	}
 
 	secretHash := sha256Hash(secret[:])
-	locktime := time.Now().Add(10 * time.Minute).Unix() // NEED TO CHANGE
+	locktime := time.Now().Add(5 * time.Minute).Unix() // NEED TO CHANGE
 
 	build, err := buildContract(&contractArgs{
 		them:       cmd.counterparty2Addr,
@@ -178,12 +178,12 @@ func buildContract(args *contractArgs, cmd *initiateCmd) (*builtContract, error)
 
 	unsignedContract := wire.NewMsgTx(txVersion)
 	unsignedContract.AddTxOut(wire.NewTxOut(int64(args.amount), contractP2SHPkScript))
-	unsignedContract, contractFee, err := fundRawTransaction(unsignedContract, *cmd, feePerKb)
+	unsignedContract, contractFee, sourceUTXOs, err := fundRawTransaction(unsignedContract, *cmd, feePerKb)
 	if err != nil {
 		return nil, fmt.Errorf("funded raw transaction: %v\n", err)
 	}
-	//contractTx, complete, err := signRawTransaction(unsignedContract)
-	contractTx, complete, err := signRawTransaction(unsignedContract)
+
+	contractTx, complete, err := signRawTransaction(unsignedContract, *cmd, sourceUTXOs)
 	if err != nil {
 		return nil, fmt.Errorf("signrawtransaction: %v", err)
 	}
@@ -214,12 +214,11 @@ func buildContract(args *contractArgs, cmd *initiateCmd) (*builtContract, error)
 
 var AmountPaymentSat = int64(2.09 * 10000000)
 
-func fundRawTransaction(tx *wire.MsgTx, cmd initiateCmd, feePerKb btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, err error) {
+func fundRawTransaction(tx *wire.MsgTx, cmd initiateCmd, feePerKb btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, sourceUTXOs []*insight.UTXO, err error) {
 
-	//sourceAddress, _ := btcutil.DecodeAddress(sourceAddr, &chaincfg.MainNetParams)
 	sourceAddress, _ := GenerateNewPublicKey(*cmd.wif)
 	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.AddressPubKeyHash().String())
-	sourceUTXOs := insight.GetMinimalRequiredUTXO(AmountPaymentSat, unspentOutputs)
+	sourceUTXOs = insight.GetMinimalRequiredUTXO(AmountPaymentSat, unspentOutputs)
 	availableAmountToSpend := int64(0) // amount in UTXO available
 
 	for idx := range sourceUTXOs {
@@ -235,51 +234,37 @@ func fundRawTransaction(tx *wire.MsgTx, cmd initiateCmd, feePerKb btcutil.Amount
 	tx.Serialize(&buf)
 
 
-	//param0 := hex.EncodeToString(buf.Bytes())
-	//param0, err := json.Marshal(hex.EncodeToString(buf.Bytes()))
-	//if err != nil {
-	//	return nil, 0, err
-	//}
-
-	//param1, err := json.Marshal(struct {
-	//	FeeRate float64 `json:"feeRate"`
-	//}{
-	//	FeeRate: feePerKb.ToBTC(),
-	//})
-
-	var funded struct {
-		Hex       string  `json:"hex"`
-		Fee       float64 `json:"fee"`
-		ChangePos float64 `json:"chane_pos"`
-	}
-	//x := hex.EncodeToString(buf.Bytes())
-	funded.Fee = 0.001
-	//funded.Hex = x
-	//
-	//fmt.Println(buf.Bytes())
-
-	///fundedTxBytes, err := hex.DecodeString(param0) // TODO
-	//fundedTx = &wire.MsgTx{}
-	//err = fundedTx.Deserialize(bytes.NewReader(fundedTxBytes))
-	//if err != nil {
-	//	return nil, 0, err /// TODO fix
-	//}
-
-	feeAmount, err := btcutil.NewAmount(funded.Fee)
+	feeAmount, err := btcutil.NewAmount(0.00045)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, sourceUTXOs, err
 	}
 
 	fmt.Println(hex.EncodeToString(buf.Bytes()))
-	return tx, feeAmount, nil
+	return tx, feeAmount, sourceUTXOs, nil
 }
 
-func signRawTransaction(tx *wire.MsgTx) (*wire.MsgTx, bool, error) {
+func signRawTransaction(tx *wire.MsgTx, cmd initiateCmd, sourceUTXOs []*insight.UTXO) (*wire.MsgTx, bool, error) {
+
+	sourceAddress, _ := GenerateNewPublicKey(*cmd.wif)
+	sourcePKScript, err := txscript.PayToAddrScript(sourceAddress.AddressPubKeyHash())
+	if err != nil {
+		fmt.Errorf("error signing soucePKScript: %s\n", sourcePKScript)
+	}
+
+	for i := range sourceUTXOs {
+		sigScript, err := txscript.SignatureScript(tx, i, sourcePKScript, txscript.SigHashAll, cmd.wif.PrivKey, true)
+		if err != nil {
+			fmt.Errorf("error signing source UTXO's\n")
+		}
+		tx.TxIn[i].SignatureScript = sigScript
+	}
+
 	signedTx := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
 	if err := tx.Serialize(signedTx); err != nil {
 		return &wire.MsgTx{}, false, fmt.Errorf("Failed to sign tx")
 	}
 
+	fmt.Printf("signed tx: %s\n", hex.EncodeToString(signedTx.Bytes()))
 	return tx, true, nil
 }
 
