@@ -35,4 +35,5 @@ func TestAuditContract(t *testing.T) {
 	if contract.RecipientRefundAddress.String() != expectedRecipientRefundAddress {
 		t.Errorf("Expected contract recipient refund address to be %s but got %s instead\n", expectedRecipientRefundAddress, contract.RecipientRefundAddress.String())
 	}
+	contract.show()
 }

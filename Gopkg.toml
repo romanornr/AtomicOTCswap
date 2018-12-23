@@ -36,3 +36,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/viacoin/viad"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/viacoin/viawallet"

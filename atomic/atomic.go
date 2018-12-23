@@ -327,3 +327,19 @@ func sha256Hash(x []byte) []byte {
 	hash := sha256.Sum256(x)
 	return hash[:]
 }
+
+func GetFeePerKB() (useFee, replayFee btcutil.Amount, err error) {
+
+	relayFee, _ := btcutil.NewAmount(0.00000001) //https://github.com/viacoin/viacoin/blob/master/src/test/amount_tests.cpp#L105
+	payTxFee, _ :=  btcutil.NewAmount(0.00000000) //rpc call -> getwalletinfo: paytxfee
+
+	if payTxFee != 0 {
+		maxFee := payTxFee
+		if relayFee > maxFee {
+			maxFee = relayFee
+		}
+		return maxFee, relayFee, nil
+	}
+
+	return relayFee, relayFee, nil
+}

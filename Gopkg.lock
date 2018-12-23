@@ -61,6 +61,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:84b888033c0f8aa9a720ca91b739bdc8c1a91da6a5dd14b7ed5b1444d1e132e9"
+  name = "github.com/viacoin/viawallet"
+  packages = ["wallet/txrules"]
+  pruneopts = "UT"
+  revision = "a775b77c2dc41cc00d3156bc7b57e2ac9776a232"
+
+[[projects]]
+  branch = "master"
   digest = "1:734c27157144367f37acd13536569700f61f01576c4a5e9665ccb76f79966d97"
   name = "golang.org/x/crypto"
   packages = [
@@ -84,6 +92,7 @@
     "github.com/viacoin/viad/txscript",
     "github.com/viacoin/viad/wire",
     "github.com/viacoin/viautil",
+    "github.com/viacoin/viawallet/wallet/txrules",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
