@@ -12,7 +12,7 @@ import (
 	"github.com/viacoin/viawallet/wallet/txrules"
 )
 
-func Refund(contractHex string, contractTransaction string) (*refundCmd, error) {
+func Refund(contractHex string, contractTransaction string, wif *btcutil.WIF) (*refundCmd, error) {
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
 		return &refundCmd{}, fmt.Errorf("failed to decode contract: %v\n", err)
@@ -30,13 +30,13 @@ func Refund(contractHex string, contractTransaction string) (*refundCmd, error) 
 	return &refundCmd{contract: contract, contractTx: &contractTx}, nil
 }
 
-func (cmd *refundCmd) runRefund() error {
+func (cmd *refundCmd) runRefund(wif *btcutil.WIF) error {
 	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, cmd.contract)
 	if err != nil {
 		return err
 	}
 	if pushes == nil {
-		return error.New("contract is not an atomic swap script recognized bu this tool")
+		return errors.New("contract is not an atomic swap script recognized bu this tool")
 	}
 
 	feePerKb, minFeePerKb, err := GetFeePerKB()
@@ -44,15 +44,29 @@ func (cmd *refundCmd) runRefund() error {
 		return err
 	}
 
-	refundTx, refundFee, err := buildRefund(cmd.contract, cmd.contractTx, feePerKb, minFeePerKb)
+	refundTx, refundFee, err := buildRefund(cmd.contract, cmd.contractTx, feePerKb, minFeePerKb, wif)
 	if err != nil {
 		return err
 	}
 
-	//TODO
+	refundTxHash := refundTx.TxHash()
+	var buf bytes.Buffer
+	buf.Grow(refundTx.SerializeSize())
+	refundTx.Serialize(&buf)
+
+	refundFeePerKb := calcFeePerKb(refundFee, refundTx.SerializeSize())
+
+	fmt.Printf("Refund fee: %v (%0.8f VIA/kB\n\n", refundFee, refundFeePerKb)
+	fmt.Printf("Refund Transaction: (%v):\n", &refundTxHash)
+
+	return nil
 }
 
-func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb btcutil.Amount, refundAddress *btcutil.Address, wif *btcutil.WIF) (refundTx *wire.MsgTx, refundFee btcutil.Amount, err error)  {
+func calcFeePerKb(absoluteFee btcutil.Amount, serializeSize int) float64 {
+	return float64(absoluteFee) / float64(serializeSize) / 1e5
+}
+
+func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb btcutil.Amount, wif *btcutil.WIF) (refundTx *wire.MsgTx, refundFee btcutil.Amount, err error) {
 	contractP2SH, err := btcutil.NewAddressScriptHash(contract, &chaincfg.MainNetParams)
 	if err != nil {
 		return nil, 0, err
@@ -63,27 +77,29 @@ func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb 
 	}
 
 	contractTxHash := contractTx.TxHash()
-	contractOutpoint := wire.OutPoint{Hash:contractTxHash, Index: ^uint32(0)}
+	contractOutPoint := wire.OutPoint{Hash: contractTxHash, Index: ^uint32(0)}
 	for i, out := range contractTx.TxOut {
 		if bytes.Equal(out.PkScript, contractP2SHPkScript) {
-			contractOutpoint.Index = uint32(i)
+			contractOutPoint.Index = uint32(i)
 			break
 		}
 	}
-	if contractOutpoint.Index == ^uint32(0) {
+	if contractOutPoint.Index == ^uint32(0) {
 		return nil, 0, errors.New("contract tx does not contain a P2SH contract payment")
 	}
 
-	//addr, err := btcutil.DecodeAddress(refundAddress, &chaincfg.MainNetParams)
-	//if err != nil {
-	//	return fmt.Errorf("error decoding refund address: %s\n", addr.String())
-	//}
-	refundOutScript, err := txscript.PayToAddrScript(*refundAddress)
+	address, err := getRawChangeAddress(wif)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
-	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, refundOutScript)
+	refundOutScript, err := txscript.PayToAddrScript(address)
+	if err != nil {
+		return nil, 0, err
+	}
+
+
+	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, contract)
 	if err != nil {
 		panic(err) /// TODO Something else? Idk yet
 	}
@@ -95,45 +111,86 @@ func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb 
 
 	refundTx = wire.NewMsgTx(txVersion) // TODO refactor: This can be different per coin. Viacoin is 2 but Zcoin is 1
 	refundTx.LockTime = uint32(pushes.LockTime)
-	refundTx.AddTxOut(wire.NewTxOut(0, refundOutScript))
+	refundTx.AddTxOut(wire.NewTxOut(0, refundOutScript)) // amount set below
 	refundSize := estimateRefundSerializeSize(contract, refundTx.TxOut)
 	refundFee = txrules.FeeForSerializeSize(feePerKb, refundSize)
-	refundTx.TxOut[0].Value = contractTx.TxOut[contractOutpoint.Index].Value - int64(refundFee)
+	refundTx.TxOut[0].Value = contractTx.TxOut[contractOutPoint.Index].Value - int64(refundFee)
 	if txrules.IsDustOutput(refundTx.TxOut[0], minFeePerKb) {
 		return nil, 0, fmt.Errorf("refund output value of %v is dust", btcutil.Amount(refundTx.TxOut[0].Value))
 	}
 
-	txIn := wire.NewTxIn(&contractOutpoint, nil, nil)
+	txIn := wire.NewTxIn(&contractOutPoint, nil, nil)
 	txIn.Sequence = 0
 	refundTx.AddTxIn(txIn)
 
-	refundSig, refundPubkey, err := createSig(refundTx, 0, contract, wif) //TODO signing
+	refundSig, refundPubKey, err := createSig(refundTx, 0, contract, refundAddr, wif) //TODO signing
 	if err != nil {
 		return nil, 0, err
 	}
 
-	refundSigScript, err := refundP2SHContract(contract, refundSig, refundPubkey)
+	refundSigScript, err := refundP2SHContract(contract, refundSig, refundPubKey)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	refundTx.TxIn[0].SignatureScript = refundSigScript
 
+	if verify {
+		e, err := txscript.NewEngine(contractTx.TxOut[contractOutPoint.Index].PkScript,
+			refundTx, 0, txscript.StandardVerifyFlags, txscript.NewSigCache(10),
+			txscript.NewTxSigHashes(refundTx), contractTx.TxOut[contractOutPoint.Index].Value)
+		if err != nil {
+			panic(err)
+		}
+		err = e.Execute()
+		if err != nil {
+			panic(err)
+		}
+	}
+	return refundTx, refundFee, nil
 }
 
-func createSig(tx *wire.MsgTx, idx int, pkScript []byte, wif *btcutil.WIF) (sig, pubkey []byte, err error) {
-	sourceAddress, _  := GenerateNewPublicKey(*wif)
-	if !bytes.Equal(sourceAddress.ScriptAddress(), pkScript) {
+// refundP2SHContract returns the signature script to refund a contract output
+// using the contract initiator/participant signature after locktime is reached
+func refundP2SHContract(contract, sig, pubkey []byte) ([]byte, error) {
+	builder := txscript.NewScriptBuilder()
+	builder.AddData(sig)
+	builder.AddData(pubkey)
+	builder.AddInt64(0)
+	builder.AddData(contract)
+	return builder.Script()
+}
+
+func createSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF) (sig, pubkey []byte, err error) {
+	sourceAddress, _ := GenerateNewPublicKey(*wif)
+	if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
 		return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
 	}
 
-	sig, err = txscript.SignatureScript(tx, idx, pkScript, txscript.SigHashAll, wif.PrivKey, true)
+	sig, err = txscript.RawTxInSignature(tx, idx, pkScript, txscript.SigHashAll, wif.PrivKey)
 	if err != nil {
 		return nil, nil, err
 	}
 	return sig, wif.PrivKey.PubKey().SerializeCompressed(), nil
 }
 
+// getRawChangeAddress calls the getrawchangeaddress JSON-RPC method.  It is
+// implemented manually as the rpcclient implementation always passes the
+// account parameter which was removed in Viacoin Core 0.15.
+func getRawChangeAddress(wif *btcutil.WIF) (btcutil.Address, error) {
+
+	addr, _ := GenerateNewPublicKey(*wif)
+	address, err := btcutil.DecodeAddress(addr.EncodeAddress(), &chaincfg.MainNetParams)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := address.(*btcutil.AddressPubKeyHash); !ok {
+		return nil, fmt.Errorf("getrawchangeaddress: address %v is not P2PKH",
+			addr)
+	}
+	return address, nil
+}
 
 // TODO---------------------------
 
@@ -148,7 +205,6 @@ func sumOutputSerializeSizes(outputs []*wire.TxOut) (serializeSize int) {
 	}
 	return serializeSize
 }
-
 
 // inputSize returns the size of the transaction input needed to include a
 // signature script with size sigScriptSize.  It is calculated as:

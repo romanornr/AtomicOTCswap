@@ -67,7 +67,7 @@ type contractArgs struct {
 	secretHash []byte
 }
 
-func Initiate(participantAddr string, refundAddress string, wif *btcutil.WIF, amount float64) error {
+func Initiate(participantAddr string, wif *btcutil.WIF, amount float64) error {
 	counterparty2Addr, err := btcutil.DecodeAddress(participantAddr, &chaincfg.MainNetParams)
 	if err != nil {
 		return fmt.Errorf("failed to decode the address from the participant: %s", err)
@@ -83,10 +83,13 @@ func Initiate(participantAddr string, refundAddress string, wif *btcutil.WIF, am
 		return err
 	}
 
-	refundAddr, err := btcutil.DecodeAddress(refundAddress, &chaincfg.MainNetParams)
+	refundAddrPubKey, err := GenerateNewPublicKey(*wif)
+
+	refundAddr, err := btcutil.DecodeAddress(refundAddrPubKey.EncodeAddress(), &chaincfg.MainNetParams)
 	if err != nil {
 		return fmt.Errorf("failed to decode the refund address: %s", err)
 	}
+
 
 	refundAddrP2KH, ok := refundAddr.(*btcutil.AddressPubKeyHash)
 	if !ok {
@@ -112,7 +115,7 @@ func (cmd *initiateCmd) runCommand() error {
 		amount:     cmd.amount,
 		locktime:   locktime,
 		secretHash: secretHash,
-	}, cmd)
+	}, cmd.wif)
 
 	if err != nil {
 		return err
@@ -150,9 +153,10 @@ type builtContract struct {
 	refundFee      btcutil.Amount
 }
 
-func buildContract(args *contractArgs, cmd *initiateCmd) (*builtContract, error) {
+func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error) {
 
-	refundAddr, _ := btcutil.DecodeAddress(cmd.refundAddr.String(), &chaincfg.MainNetParams)
+	refundAddress, _ := GenerateNewPublicKey(*wif)
+	refundAddr, _ := btcutil.DecodeAddress(refundAddress.EncodeAddress(), &chaincfg.MainNetParams)
 
 	refundAddrHash, ok := refundAddr.(interface {
 		Hash160() *[ripemd160.Size]byte
@@ -173,17 +177,20 @@ func buildContract(args *contractArgs, cmd *initiateCmd) (*builtContract, error)
 	if err != nil {
 		return nil, err
 	}
-	feePerKb, _ := btcutil.NewAmount(0.01)
-	//minFeePerKb, _ := btcutil.NewAmount(0.02)
+
+	feePerKb, minFeePerKb, err := GetFeePerKB()
+	if err != nil {
+		return nil, err
+	}
 
 	unsignedContract := wire.NewMsgTx(txVersion)
 	unsignedContract.AddTxOut(wire.NewTxOut(int64(args.amount), contractP2SHPkScript))
-	unsignedContract, contractFee, sourceUTXOs, err := fundRawTransaction(unsignedContract, *cmd, feePerKb)
+	unsignedContract, contractFee, sourceUTXOs, err := fundRawTransaction(unsignedContract, wif, feePerKb)
 	if err != nil {
 		return nil, fmt.Errorf("funded raw transaction: %v\n", err)
 	}
 
-	contractTx, complete, err := signRawTransaction(unsignedContract, *cmd, sourceUTXOs)
+	contractTx, complete, err := signRawTransaction(unsignedContract, wif, sourceUTXOs)
 	if err != nil {
 		return nil, fmt.Errorf("signrawtransaction: %v", err)
 	}
@@ -193,12 +200,10 @@ func buildContract(args *contractArgs, cmd *initiateCmd) (*builtContract, error)
 
 	contractTxHash := contractTx.TxHash()
 
-	//refundTx, refundFee, err := buildRefund(c, contract, contractTx, feePerKb, minFeePerKb)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	refundFee, _ := btcutil.NewAmount(0.001)
+	refundTx, refundFee, err := buildRefund(contract, contractTx, feePerKb, minFeePerKb, wif)
+	if err != nil {
+		return nil, err
+	}
 
 	return &builtContract{
 		contract,
@@ -206,17 +211,16 @@ func buildContract(args *contractArgs, cmd *initiateCmd) (*builtContract, error)
 		&contractTxHash,
 		contractTx,
 		contractFee,
-		&wire.MsgTx{},
-		//refundTx,
+		refundTx,
 		refundFee,
 	}, nil
 }
 
 var AmountPaymentSat = int64(2.09 * 10000000)
 
-func fundRawTransaction(tx *wire.MsgTx, cmd initiateCmd, feePerKb btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, sourceUTXOs []*insight.UTXO, err error) {
+func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, sourceUTXOs []*insight.UTXO, err error) {
 
-	sourceAddress, _ := GenerateNewPublicKey(*cmd.wif)
+	sourceAddress, _ := GenerateNewPublicKey(*wif)
 	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.AddressPubKeyHash().String())
 	sourceUTXOs = insight.GetMinimalRequiredUTXO(AmountPaymentSat, unspentOutputs)
 	availableAmountToSpend := int64(0) // amount in UTXO available
@@ -243,16 +247,16 @@ func fundRawTransaction(tx *wire.MsgTx, cmd initiateCmd, feePerKb btcutil.Amount
 	return tx, feeAmount, sourceUTXOs, nil
 }
 
-func signRawTransaction(tx *wire.MsgTx, cmd initiateCmd, sourceUTXOs []*insight.UTXO) (*wire.MsgTx, bool, error) {
+func signRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, sourceUTXOs []*insight.UTXO) (*wire.MsgTx, bool, error) {
 
-	sourceAddress, _ := GenerateNewPublicKey(*cmd.wif)
+	sourceAddress, _ := GenerateNewPublicKey(*wif)
 	sourcePKScript, err := txscript.PayToAddrScript(sourceAddress.AddressPubKeyHash())
 	if err != nil {
 		fmt.Errorf("error signing soucePKScript: %s\n", sourcePKScript)
 	}
 
 	for i := range sourceUTXOs {
-		sigScript, err := txscript.SignatureScript(tx, i, sourcePKScript, txscript.SigHashAll, cmd.wif.PrivKey, true)
+		sigScript, err := txscript.SignatureScript(tx, i, sourcePKScript, txscript.SigHashAll, wif.PrivKey, true)
 		if err != nil {
 			fmt.Errorf("error signing source UTXO's\n")
 		}
