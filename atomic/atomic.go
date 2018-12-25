@@ -237,14 +237,24 @@ func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amoun
 	fmt.Println(tx.SerializeSize())
 	tx.Serialize(&buf)
 
+	//feeAmount, err := btcutil.NewAmount(0.00045)
+	//if err != nil {
+	//	return nil, 0, sourceUTXOs, err
+	//}
 
-	feeAmount, err := btcutil.NewAmount(0.00045)
-	if err != nil {
-		return nil, 0, sourceUTXOs, err
-	}
+	feeAmount := feeEstimator(tx)
 
 	fmt.Println(hex.EncodeToString(buf.Bytes()))
 	return tx, feeAmount, sourceUTXOs, nil
+}
+
+func feeEstimator(tx *wire.MsgTx) (amount btcutil.Amount) {
+	feePerByte := 110 // TODO change for alts
+	estimatedSize := tx.SerializeSize()
+
+	a := btcutil.Amount(feePerByte * estimatedSize)
+	fmt.Println(a)
+	return a
 }
 
 func signRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, sourceUTXOs []*insight.UTXO) (*wire.MsgTx, bool, error) {
