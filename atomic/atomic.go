@@ -185,7 +185,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 
 	unsignedContract := wire.NewMsgTx(txVersion)
 	unsignedContract.AddTxOut(wire.NewTxOut(int64(args.amount), contractP2SHPkScript))
-	unsignedContract, contractFee, sourceUTXOs, err := fundRawTransaction(unsignedContract, wif, feePerKb)
+	unsignedContract, contractFee, sourceUTXOs, err := fundRawTransaction(unsignedContract, wif, feePerKb, args.amount)
 	if err != nil {
 		return nil, fmt.Errorf("funded raw transaction: %v\n", err)
 	}
@@ -218,7 +218,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 
 var AmountPaymentSat = int64(2.09 * 10000000)
 
-func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, sourceUTXOs []*insight.UTXO, err error) {
+func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amount, amount btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, sourceUTXOs []*insight.UTXO, err error) {
 
 	sourceAddress, _ := GenerateNewPublicKey(*wif)
 	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.AddressPubKeyHash().String())
@@ -243,6 +243,11 @@ func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amoun
 	//}
 
 	feeAmount := feeEstimator(tx)
+	change := availableAmountToSpend - int64(amount)
+	change -= int64(feeAmount)
+	if change != 0 {
+		//ChangeAddr TODO
+	}
 
 	fmt.Println(hex.EncodeToString(buf.Bytes()))
 	return tx, feeAmount, sourceUTXOs, nil
@@ -344,7 +349,7 @@ func sha256Hash(x []byte) []byte {
 
 func GetFeePerKB() (useFee, replayFee btcutil.Amount, err error) {
 
-	relayFee, _ := btcutil.NewAmount(0.00000001) //https://github.com/viacoin/viacoin/blob/master/src/test/amount_tests.cpp#L105
+	relayFee, _ := btcutil.NewAmount(0.00000001)
 	payTxFee, _ :=  btcutil.NewAmount(0.00000000) //rpc call -> getwalletinfo: paytxfee
 
 	if payTxFee != 0 {
