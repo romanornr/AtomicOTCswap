@@ -108,7 +108,7 @@ func (cmd *initiateCmd) runCommand() error {
 	}
 
 	secretHash := sha256Hash(secret[:])
-	locktime := time.Now().Add(5 * time.Minute).Unix() // NEED TO CHANGE
+	locktime := time.Now().Add(10 * time.Minute).Unix() // NEED TO CHANGE
 
 	build, err := buildContract(&contractArgs{
 		them:       cmd.counterparty2Addr,
@@ -232,34 +232,48 @@ func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amoun
 		tx.AddTxIn(sourceTxIn)
 	}
 
-	var buf bytes.Buffer
-	buf.Grow(tx.SerializeSize())
-	fmt.Println(tx.SerializeSize())
-	tx.Serialize(&buf)
-
-	//feeAmount, err := btcutil.NewAmount(0.00045)
-	//if err != nil {
-	//	return nil, 0, sourceUTXOs, err
-	//}
-
 	feeAmount := feeEstimator(tx)
+
+	// change address, sent left over UTXO back to user his own address
+	// if there's change left, sent it back to the source wallet
+
+	// the change should be the amount the user has minus what is going to be sent
+	// minus the fee
 	change := availableAmountToSpend - int64(amount)
 	change -= int64(feeAmount)
-	if change != 0 {
-		//ChangeAddr TODO
-	}
 
-	fmt.Println(hex.EncodeToString(buf.Bytes()))
+	changeSendToScript, err := txscript.PayToAddrScript(sourceAddress)
+	if err != nil {
+		panic(err)
+	}
+	// tx out to sent back to user his own address
+	changeOutputsize := wire.NewTxOut(change, changeSendToScript).SerializeSize()
+	// recalculate fees TODO find a better way, this isn't right yet
+		//change += int64(feeAmount)
+		feeAmount = feeEstimationBySize(tx.SerializeSize()+changeOutputsize)
+		change -= int64(feeAmount)
+		change -= int64(feeAmount *3) // TODO change
+
+		changeOutput := wire.NewTxOut(change, changeSendToScript)
+		tx.AddTxOut(changeOutput)
+
+	var buf bytes.Buffer
+	buf.Grow(tx.SerializeSize())
+	tx.Serialize(&buf)
+
 	return tx, feeAmount, sourceUTXOs, nil
 }
 
-func feeEstimator(tx *wire.MsgTx) (amount btcutil.Amount) {
+// TODO maybe fee per byte to 279
+func feeEstimator(tx *wire.MsgTx, ) (amount btcutil.Amount) {
 	feePerByte := 110 // TODO change for alts
 	estimatedSize := tx.SerializeSize()
+	return btcutil.Amount(feePerByte * estimatedSize)
+}
 
-	a := btcutil.Amount(feePerByte * estimatedSize)
-	fmt.Println(a)
-	return a
+func feeEstimationBySize(size int) (amount btcutil.Amount) {
+	feePerByte := 110 // TODO change for alts
+	return btcutil.Amount(feePerByte * size)
 }
 
 func signRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, sourceUTXOs []*insight.UTXO) (*wire.MsgTx, bool, error) {
@@ -349,7 +363,7 @@ func sha256Hash(x []byte) []byte {
 
 func GetFeePerKB() (useFee, replayFee btcutil.Amount, err error) {
 
-	relayFee, _ := btcutil.NewAmount(0.00000001)
+	relayFee, _ := btcutil.NewAmount(0.00100000) //rpc call -> getnetworkinfo: relayfee
 	payTxFee, _ :=  btcutil.NewAmount(0.00000000) //rpc call -> getwalletinfo: paytxfee
 
 	if payTxFee != 0 {
