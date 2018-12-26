@@ -26,23 +26,23 @@ type AuditedContract struct {
 	AtomicSwapDataPushes   *txscript.AtomicSwapDataPushes
 }
 
-func AuditContract(contractHex string, contractTransaction string) (*AuditContractCmd) {
+func AuditContract(contractHex string, contractTransaction string) (*AuditContractCmd, error) {
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
-		fmt.Errorf("failed to decode contract: %v\n", err)
+		return &AuditContractCmd{}, fmt.Errorf("failed to decode contract: %v\n", err)
 	}
 
 	contractTxBytes, err := hex.DecodeString(contractTransaction)
 	if err != nil {
-		fmt.Errorf("failed to decode transaction:%v\n", err)
+		return &AuditContractCmd{}, fmt.Errorf("failed to decode transaction:%v\n", err)
 	}
 	var contractTx wire.MsgTx
 	err = contractTx.Deserialize(bytes.NewReader(contractTxBytes))
 	if err != nil {
-		fmt.Errorf("failed to decode transaction: %v\n", err)
+		return &AuditContractCmd{}, fmt.Errorf("failed to decode transaction: %v\n", err)
 	}
 
-	return &AuditContractCmd{contract: contract, contractTx: &contractTx}
+	return &AuditContractCmd{contract: contract, contractTx: &contractTx}, nil
 }
 
 func (cmd *AuditContractCmd) runAudit() (AuditedContract, error) {
