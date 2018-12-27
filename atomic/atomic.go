@@ -31,11 +31,6 @@ type initiateCmd struct {
 	amount            btcutil.Amount
 }
 
-type redeemCmd struct {
-	contract   []byte
-	contractTx *wire.MsgTx
-}
-
 type refundCmd struct {
 	contract   []byte
 	contractTx *wire.MsgTx
