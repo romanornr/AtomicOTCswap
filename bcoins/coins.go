@@ -68,15 +68,39 @@ const (
 	AmountSatoshi  AmountUnit = -8
 )
 
-func (coin Coin) GetBtcUtil(u AmountUnit) string {
-	//u := coin.Btcutil.AmountUnit
-	//u := btcutil.AmountUnit
+//func (coin Coin) GetBtcUtil(u AmountUnit) string {
+//	//u := coin.Btcutil.AmountUnit
+//	//u := btcutil.AmountUnit
+//
+//	// String returns the unit as a string.  For recognized units, the SI
+//	// prefix is used, or "Satoshi" for the base unit.  For all unrecognized
+//	// units, "1eN BTC" is returned, where N is the AmountUnit.
+//	//func (u AmountUnit) String() string {
+//		switch u {
+//	case AmountMegaBTC:
+//		return "MVIA"
+//	case AmountKiloBTC:
+//		return "kVIA"
+//	case AmountBTC:
+//		return "VIA"
+//	case AmountMilliBTC:
+//		return "mVIA"
+//	case AmountMicroBTC:
+//		return "μVIA"
+//	case AmountSatoshi:
+//		return "Satoshi"
+//	default:
+//		return "1e" + strconv.FormatInt(int64(u), 10) + " VIA"
+//	}
+//
+//}
 
-	// String returns the unit as a string.  For recognized units, the SI
-	// prefix is used, or "Satoshi" for the base unit.  For all unrecognized
-	// units, "1eN BTC" is returned, where N is the AmountUnit.
-	//func (u AmountUnit) String() string {
-		switch u {
+
+// String returns the unit as a string.  For recognized units, the SI
+// prefix is used, or "Satoshi" for the base unit.  For all unrecognized
+// units, "1eN BTC" is returned, where N is the AmountUnit.
+func (u AmountUnit) String() string {
+	switch u {
 	case AmountMegaBTC:
 		return "MVIA"
 	case AmountKiloBTC:
@@ -92,5 +116,4 @@ func (coin Coin) GetBtcUtil(u AmountUnit) string {
 	default:
 		return "1e" + strconv.FormatInt(int64(u), 10) + " VIA"
 	}
-
 }
