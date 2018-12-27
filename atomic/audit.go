@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/go-errors/errors"
-	"github.com/viacoin/viad/chaincfg"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/viacoin/viad/txscript"
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
@@ -26,30 +26,36 @@ type AuditedContract struct {
 	AtomicSwapDataPushes   *txscript.AtomicSwapDataPushes
 }
 
-func AuditContract(contractHex string, contractTransaction string) (*AuditContractCmd, error) {
+func AuditContract(coinTicker string, contractHex string, contractTransaction string) (AuditedContract, error) {
+	coin, err := bcoins.SelectCoin(coinTicker)
+	if err != nil {
+		return AuditedContract{}, err
+	}
+
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
-		return &AuditContractCmd{}, fmt.Errorf("failed to decode contract: %v\n", err)
+		return AuditedContract{}, fmt.Errorf("failed to decode contract: %v\n", err)
 	}
 
 	contractTxBytes, err := hex.DecodeString(contractTransaction)
 	if err != nil {
-		return &AuditContractCmd{}, fmt.Errorf("failed to decode transaction:%v\n", err)
+		return AuditedContract{}, fmt.Errorf("failed to decode transaction:%v\n", err)
 	}
 	var contractTx wire.MsgTx
 	err = contractTx.Deserialize(bytes.NewReader(contractTxBytes))
 	if err != nil {
-		return &AuditContractCmd{}, fmt.Errorf("failed to decode transaction: %v\n", err)
+		return AuditedContract{}, fmt.Errorf("failed to decode transaction: %v\n", err)
 	}
 
-	return &AuditContractCmd{contract: contract, contractTx: &contractTx}, nil
+	c := AuditContractCmd{contract: contract, contractTx: &contractTx}
+	return c.runAudit(coin)
 }
 
-func (cmd *AuditContractCmd) runAudit() (AuditedContract, error) {
+func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error) {
 	contractHash160 := btcutil.Hash160(cmd.contract)
 	contractOut := -1
 	for i, out := range cmd.contractTx.TxOut {
-		sc, addrs, _, err := txscript.ExtractPkScriptAddrs(out.PkScript, &chaincfg.MainNetParams)
+		sc, addrs, _, err := txscript.ExtractPkScriptAddrs(out.PkScript, coin.Network.ChainCgfMainNetParams())
 		if err != nil || sc != txscript.ScriptHashTy {
 			continue
 		}
@@ -73,16 +79,16 @@ func (cmd *AuditContractCmd) runAudit() (AuditedContract, error) {
 		return AuditedContract{}, fmt.Errorf("contract specifies strange range secret size: %v\n", pushes.SecretSize)
 	}
 
-	contractAddr, err := btcutil.NewAddressScriptHash(cmd.contract, &chaincfg.MainNetParams)
+	contractAddr, err := btcutil.NewAddressScriptHash(cmd.contract, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return AuditedContract{}, err
 	}
 
-	recipientAddr, err := btcutil.NewAddressPubKeyHash(pushes.RecipientHash160[:], &chaincfg.MainNetParams)
+	recipientAddr, err := btcutil.NewAddressPubKeyHash(pushes.RecipientHash160[:], coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return AuditedContract{}, err
 	}
-	refundAddr, err := btcutil.NewAddressPubKeyHash(pushes.RefundHash160[:], &chaincfg.MainNetParams)
+	refundAddr, err := btcutil.NewAddressPubKeyHash(pushes.RefundHash160[:], coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return AuditedContract{}, err
 	}
