@@ -24,19 +24,10 @@ const (
 	txVersion  = 2
 )
 
-//type Command interface {
-//
-//}
-
 type initiateCmd struct {
 	counterparty2Addr *btcutil.AddressPubKeyHash
-	refundAddr	*btcutil.AddressPubKeyHash
-	wif *btcutil.WIF
-	amount            btcutil.Amount
-}
-
-type participateCmd struct {
-	counterparty1Addr *btcutil.AddressPubKeyHash
+	//refundAddr	*btcutil.AddressPubKeyHash
+	//wif *btcutil.WIF
 	amount            btcutil.Amount
 }
 
@@ -83,24 +74,24 @@ func Initiate(participantAddr string, wif *btcutil.WIF, amount float64) error {
 		return err
 	}
 
-	refundAddrPubKey, err := GenerateNewPublicKey(*wif)
+	//refundAddrPubKey, err := GenerateNewPublicKey(*wif)
+	//
+	//refundAddr, err := btcutil.DecodeAddress(refundAddrPubKey.EncodeAddress(), &chaincfg.MainNetParams)
+	//if err != nil {
+	//	return fmt.Errorf("failed to decode the refund address: %s", err)
+	//}
+	//
+	//
+	//refundAddrP2KH, ok := refundAddr.(*btcutil.AddressPubKeyHash)
+	//if !ok {
+	//	return errors.New("participant address is not P2KH")
+	//}
 
-	refundAddr, err := btcutil.DecodeAddress(refundAddrPubKey.EncodeAddress(), &chaincfg.MainNetParams)
-	if err != nil {
-		return fmt.Errorf("failed to decode the refund address: %s", err)
-	}
-
-
-	refundAddrP2KH, ok := refundAddr.(*btcutil.AddressPubKeyHash)
-	if !ok {
-		return errors.New("participant address is not P2KH")
-	}
-
-	cmd := &initiateCmd{counterparty2Addr: counterparty2AddrP2KH, refundAddr: refundAddrP2KH, wif: wif, amount: amount2}
-	return cmd.runCommand()
+	cmd := &initiateCmd{counterparty2Addr: counterparty2AddrP2KH, amount: amount2}
+	return cmd.runCommand(wif)
 }
 
-func (cmd *initiateCmd) runCommand() error {
+func (cmd *initiateCmd) runCommand(wif *btcutil.WIF) error {
 	var secret [secretSize]byte
 	_, err := rand.Read(secret[:])
 	if err != nil {
@@ -115,7 +106,7 @@ func (cmd *initiateCmd) runCommand() error {
 		amount:     cmd.amount,
 		locktime:   locktime,
 		secretHash: secretHash,
-	}, cmd.wif)
+	}, wif)
 
 	if err != nil {
 		return err
