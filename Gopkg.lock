@@ -11,27 +11,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1e6b2f7aa98b082c30a1303c29a702c369b2ec6d86b74a599bc8bbe2333db299"
-  name = "github.com/btcsuite/go-socks"
-  packages = ["socks"]
-  pruneopts = "UT"
-  revision = "4720035b7bfd2a9bb130b1c184f8bbe41b6f0d0f"
-
-[[projects]]
-  branch = "master"
   digest = "1:49ad1acb33bb5b40c0d197321d3cf9ee9a29eb02f4765ab7c316e08983eb7559"
   name = "github.com/btcsuite/golangcrypto"
   packages = ["ripemd160"]
   pruneopts = "UT"
   revision = "53f62d9b43e87a6c56975cf862af7edf33a8d0df"
-
-[[projects]]
-  branch = "master"
-  digest = "1:0b2242fd2f4f51fb491e97e204464f75da680897a0db10ec7554c87b71b5afc3"
-  name = "github.com/btcsuite/websocket"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "31079b6807923eb23992c421b114992b95131b55"
 
 [[projects]]
   digest = "1:aacef5f5e45685f2aeda5534d0a750dee6859de7e9088cdd06192787bb01ae6d"
@@ -51,14 +35,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:032cc2fd612a171f2f3a978515d940c1a1ea175a29d4767d23411a4f9310ab12"
+  digest = "1:6c1d8b88e2fddb7af2f3a38640ff30703adf5ed3c6c21e60454be6f044ea8391"
   name = "github.com/viacoin/viad"
   packages = [
     "btcec",
-    "btcjson",
     "chaincfg",
     "chaincfg/chainhash",
-    "rpcclient",
     "txscript",
     "wire",
   ]
@@ -107,7 +89,6 @@
     "github.com/viacoin/viad/btcec",
     "github.com/viacoin/viad/chaincfg",
     "github.com/viacoin/viad/chaincfg/chainhash",
-    "github.com/viacoin/viad/rpcclient",
     "github.com/viacoin/viad/txscript",
     "github.com/viacoin/viad/wire",
     "github.com/viacoin/viautil",

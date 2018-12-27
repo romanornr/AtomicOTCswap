@@ -27,7 +27,7 @@ type Network struct {
 }
 
 var coins = map[string]Coin {
-	"via": {Name: "viacoin", Symbol: "via", Network: &Network{"viacoin", 0x47,0x21,  0xC7, 0xcbc6680f},
+	"via": {Name: "viacoin", Symbol: "xzc", Network: &Network{"viacoin", 0x47,0x21,  0xC7, 0xcbc6680f},
 		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"},
 	},
 }
@@ -42,7 +42,7 @@ func SelectCoin(symbol string) (Coin, error) {
 
 // set the chainparams correct for the given Network struct
 // and returns the chaincfg.Params
-func (network Network) GetNetworkParams() *chaincfg.Params {
+func (network Network) ChainCgfMainNetParams() *chaincfg.Params {
 	networkParams := &chaincfg.MainNetParams
 	networkParams.Name = network.Name
 	networkParams.Net = network.magic
@@ -51,68 +51,3 @@ func (network Network) GetNetworkParams() *chaincfg.Params {
 	networkParams.PrivateKeyID = network.PrivateKeyID
 	return networkParams
 }
-
-
-
-//type AmountUnit int
-//
-//// These constants define various units used when describing a viacoin
-//// monetary amount.
-//const (
-//	AmountMegaBTC  btcutil.AmountUnit = 6
-//	AmountKiloBTC  btcutil.AmountUnit = 3
-//	AmountBTC      btcutil.AmountUnit = 0
-//	AmountMilliBTC btcutil.AmountUnit = -3
-//	AmountMicroBTC btcutil.AmountUnit = -6
-//	AmountSatoshi  btcutil.AmountUnit = -8
-//)
-//
-//func (u AmountUnit) GetBtcUtil() string {
-//	//u := coin.Btcutil.AmountUnit
-//	//u := btcutil.AmountUnit
-//
-//	// String returns the unit as a string.  For recognized units, the SI
-//	// prefix is used, or "Satoshi" for the base unit.  For all unrecognized
-//	// units, "1eN BTC" is returned, where N is the AmountUnit.
-//	//func (u AmountUnit) String() string {
-//		switch u {
-//	case AmountMegaBTC:
-//		return "MVIA"
-//	case AmountKiloBTC:
-//		return "kVIA"
-//	case AmountBTC:
-//		return "XMR"
-//	case AmountMilliBTC:
-//		return "mVIA"
-//	case AmountMicroBTC:
-//		return "μVIA"
-//	case AmountSatoshi:
-//		return "Satoshi"
-//	default:
-//		return "1e" + strconv.FormatInt(int64(u), 10) + " VIA"
-//	}
-//
-//}
-
-
-//// String returns the unit as a string.  For recognized units, the SI
-//// prefix is used, or "Satoshi" for the base unit.  For all unrecognized
-//// units, "1eN BTC" is returned, where N is the AmountUnit.
-//func (u btcutil.AmountUnit) String() string {
-//	switch u {
-//	case AmountMegaBTC:
-//		return "MVIA"
-//	case AmountKiloBTC:
-//		return "kVIA"
-//	case AmountBTC:
-//		return "XMR"
-//	case AmountMilliBTC:
-//		return "mVIA"
-//	case AmountMicroBTC:
-//		return "μVIA"
-//	case AmountSatoshi:
-//		return "Satoshi"
-//	default:
-//		return "1e" + strconv.FormatInt(int64(u), 10) + " VIA"
-//	}
-//}
