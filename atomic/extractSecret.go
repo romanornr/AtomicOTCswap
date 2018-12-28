@@ -15,31 +15,31 @@ type extractSecretCmd struct {
 	secretHash   []byte
 }
 
-func extractSecret(redemptionTransaction string, secret string) ([]byte, error) {
+func extractSecret(redemptionTransaction string, secret string) (string, error) {
 	redemptionTxBytes, err := hex.DecodeString(redemptionTransaction)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode redemption transaction: %v\n", err)
+		return "", fmt.Errorf("failed to decode redemption transaction: %v\n", err)
 	}
 
 	var redemptionTx wire.MsgTx
 	err = redemptionTx.Deserialize(bytes.NewReader(redemptionTxBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode redemptioon transaction: %v\n", err)
+		return "", fmt.Errorf("failed to decode redemptioon transaction: %v\n", err)
 	}
 
 	secretHash, err := hex.DecodeString(secret)
 	if err != nil {
-		return nil, errors.New("secret hash must be hex encoded")
+		return "", errors.New("secret hash must be hex encoded")
 	}
 	if len(secretHash) != sha256.Size {
-		return nil, errors.New("secret hash wrong size")
+		return "", errors.New("secret hash wrong size")
 	}
 
 	cmd := &extractSecretCmd{redemptionTx: &redemptionTx, secretHash: secretHash}
 	return cmd.runCommand()
 }
 
-func (cmd *extractSecretCmd) runCommand() ([]byte, error) {
+func (cmd *extractSecretCmd) runCommand() (string, error) {
 	// Loop over all pushed data from all inputs, searching for one that hashes
 	// to the expected hash.  By searching through all data pushes, we avoid any
 	// issues that could be caused by the initiator redeeming the participant's
@@ -48,14 +48,14 @@ func (cmd *extractSecretCmd) runCommand() ([]byte, error) {
 	for _, input := range cmd.redemptionTx.TxIn {
 		pushes, err := txscript.PushedData(input.SignatureScript)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		for _, push := range pushes {
 			if bytes.Equal(sha256Hash(push), cmd.secretHash) {
 				fmt.Printf("Secret: %x\n", push)
-				return push, nil
+				return fmt.Sprintf("%x", push), nil
 			}
 		}
 	}
-	return nil, errors.New("transaction does not contain the secret")
+	return "", errors.New("transaction does not contain the secret")
 }
