@@ -2,8 +2,10 @@ package atomic
 
 import (
 	"bytes"
+	"crypto/rand"
 	"fmt"
-	"github.com/viacoin/viad/chaincfg"
+	"github.com/go-errors/errors"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
 	btcutil "github.com/viacoin/viautil"
 	"time"
 )
@@ -15,8 +17,14 @@ type initiateCmd struct {
 }
 
 
-func Initiate(participantAddr string, wif *btcutil.WIF, amount float64) error {
-	counterparty2Addr, err := btcutil.DecodeAddress(participantAddr, &chaincfg.MainNetParams)
+func Initiate(coinTicker string, participantAddr string, wif *btcutil.WIF, amount float64) error {
+
+	coin, err := bcoins.SelectCoin(coinTicker)
+	if err != nil {
+		return err
+	}
+
+	counterparty2Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return fmt.Errorf("failed to decode the address from the participant: %s", err)
 	}

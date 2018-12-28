@@ -122,7 +122,7 @@ func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amoun
 		tx.AddTxIn(sourceTxIn)
 	}
 
-	feeAmount := feeEstimator(tx)
+	//feeAmount := feeEstimator(tx)
 
 	// change address, sent left over UTXO back to user his own address
 	// if there's change left, sent it back to the source wallet
@@ -130,7 +130,7 @@ func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amoun
 	// the change should be the amount the user has minus what is going to be sent
 	// minus the fee
 	change := availableAmountToSpend - int64(amount)
-	change -= int64(feeAmount)
+	//change -= int64(feeAmount) TODO check
 
 	changeSendToScript, err := txscript.PayToAddrScript(sourceAddress)
 	if err != nil {
@@ -138,11 +138,10 @@ func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amoun
 	}
 	// tx out to sent back to user his own address
 	changeOutputsize := wire.NewTxOut(change, changeSendToScript).SerializeSize()
+	fmt.Printf("ChangeOutputSize %d\n", changeOutputsize)
+
 	// recalculate fees TODO find a better way, this isn't right yet
-		//change += int64(feeAmount)
-		feeAmount = feeEstimationBySize(tx.SerializeSize()+changeOutputsize)
-		change -= int64(feeAmount)
-		change -= int64(feeAmount *3) // TODO change
+		feeAmount := feeEstimationBySize(tx.SerializeSize()+changeOutputsize)
 
 		changeOutput := wire.NewTxOut(change, changeSendToScript)
 		tx.AddTxOut(changeOutput)
@@ -150,6 +149,8 @@ func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amoun
 	var buf bytes.Buffer
 	buf.Grow(tx.SerializeSize())
 	tx.Serialize(&buf)
+
+	fmt.Printf("sum output size%d\n", sumOutputSerializeSizes(tx.TxOut))
 
 	return tx, feeAmount, sourceUTXOs, nil
 }

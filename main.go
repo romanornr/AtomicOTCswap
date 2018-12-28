@@ -15,7 +15,7 @@ func main() {
 	pk, _ := atomic.GenerateNewPublicKey(*wif)
 	fmt.Printf("public key to deposit 0.001 on: %s\n", pk.AddressPubKeyHash())
 
-	err := atomic.Initiate(partyBAddress, wif, 0.05)
+	err := atomic.Initiate("via", partyBAddress, wif, 0.05)
 
 	if err != nil {
 		fmt.Printf("%s", err)
