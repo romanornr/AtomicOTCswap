@@ -12,6 +12,11 @@ import (
 	"github.com/viacoin/viawallet/wallet/txrules"
 )
 
+type refundCmd struct {
+	contract   []byte
+	contractTx *wire.MsgTx
+}
+
 func Refund(contractHex string, contractTransaction string, wif *btcutil.WIF) (*refundCmd, error) {
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
