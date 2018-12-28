@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
-	"github.com/viacoin/viad/chaincfg"
 	"github.com/viacoin/viad/txscript"
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
@@ -59,14 +58,14 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin bcoins.Coin) error {
 	if pushes == nil {
 		return errors.New("contract is not an atomic swap script recognized by this tool")
 	}
-	recipientAddr, err := btcutil.NewAddressPubKeyHash(pushes.RecipientHash160[:], &chaincfg.MainNetParams)
+	recipientAddr, err := btcutil.NewAddressPubKeyHash(pushes.RecipientHash160[:], coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return err
 	}
 	contractHash := btcutil.Hash160(cmd.contract)
 	contractOut := -1
 	for i, out := range cmd.contractTx.TxOut {
-		sc, addrs, _, _ := txscript.ExtractPkScriptAddrs(out.PkScript, &chaincfg.MainNetParams)
+		sc, addrs, _, _ := txscript.ExtractPkScriptAddrs(out.PkScript, coin.Network.ChainCgfMainNetParams())
 		if sc == txscript.ScriptHashTy &&
 			bytes.Equal(addrs[0].(*btcutil.AddressScriptHash).Hash160()[:], contractHash) {
 			contractOut = i
@@ -164,10 +163,10 @@ func estimateRedeemSerializeSize(contract []byte, txOuts []*wire.TxOut) int {
 // redeemP2SHContract returns the signature script to redeem a contract output
 // using the redeemer's signature and the initiator's secret.  This function
 // assumes P2SH and appends the contract as the final data push.
-func redeemP2SHContract(contract, sig, pubkey, secret []byte) ([]byte, error) {
+func redeemP2SHContract(contract, sig, pubKey, secret []byte) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
 	builder.AddData(sig)
-	builder.AddData(pubkey)
+	builder.AddData(pubKey)
 	builder.AddData(secret)
 	builder.AddInt64(1)
 	builder.AddData(contract)

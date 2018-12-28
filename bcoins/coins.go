@@ -12,6 +12,7 @@ type Coin struct {
 	Network *Network
 	Insight *Insight
 	TxVersion int32
+	MinRelayTxFee float64
 }
 
 type Insight struct {
@@ -29,7 +30,7 @@ type Network struct {
 
 var coins = map[string]Coin {
 	"via": {Name: "viacoin", Symbol: "via", Network: &Network{"viacoin", 0x47,0x21,  0xC7, 0xcbc6680f},
-		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2,
+		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2, MinRelayTxFee: 0.001,
 	},
 }
 
