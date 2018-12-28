@@ -36,11 +36,6 @@ type refundCmd struct {
 	contractTx *wire.MsgTx
 }
 
-type extractSecretCmd struct {
-	redemptionTx *wire.MsgTx
-	secretHash   []byte
-}
-
 type Command struct {
 	Command string
 	Params  []string
