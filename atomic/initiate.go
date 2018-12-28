@@ -11,8 +11,6 @@ import (
 )
 type initiateCmd struct {
 	counterparty2Addr *btcutil.AddressPubKeyHash
-	//refundAddr	*btcutil.AddressPubKeyHash
-	//wif *btcutil.WIF
 	amount            btcutil.Amount
 }
 
@@ -38,19 +36,6 @@ func Initiate(coinTicker string, participantAddr string, wif *btcutil.WIF, amoun
 	if err != nil {
 		return err
 	}
-
-	//refundAddrPubKey, err := GenerateNewPublicKey(*wif)
-	//
-	//refundAddr, err := btcutil.DecodeAddress(refundAddrPubKey.EncodeAddress(), &chaincfg.MainNetParams)
-	//if err != nil {
-	//	return fmt.Errorf("failed to decode the refund address: %s", err)
-	//}
-	//
-	//
-	//refundAddrP2KH, ok := refundAddr.(*btcutil.AddressPubKeyHash)
-	//if !ok {
-	//	return errors.New("participant address is not P2KH")
-	//}
 
 	cmd := &initiateCmd{counterparty2Addr: counterparty2AddrP2KH, amount: amount2}
 	return cmd.runCommand(wif)
@@ -81,6 +66,7 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF) error {
 
 	fmt.Printf("Secret:      %x\n", secret)
 	fmt.Printf("Secret hash: %x\n\n", secretHash)
+	fmt.Printf("Contract fee: %v\n", build.contractFee.ToBTC())
 	fmt.Printf("Contract (%v):\n", build.contractP2SH)
 	fmt.Printf("%x\n\n", build.contract)
 	var contractBuf bytes.Buffer

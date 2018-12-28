@@ -3,7 +3,6 @@ package atomic
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"github.com/btcsuite/golangcrypto/ripemd160"
 	"github.com/go-errors/errors"
@@ -77,12 +76,8 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 
 	unsignedContract := wire.NewMsgTx(txVersion)
 	unsignedContract.AddTxOut(wire.NewTxOut(int64(args.amount), contractP2SHPkScript))
-	unsignedContract, contractFee, sourceUTXOs, err := fundRawTransaction(unsignedContract, wif, feePerKb, args.amount)
-	if err != nil {
-		return nil, fmt.Errorf("funded raw transaction: %v\n", err)
-	}
 
-	contractTx, complete, err := signRawTransaction(unsignedContract, wif, sourceUTXOs)
+	contractTx, contractFee, complete, err := fundAndSignRawTransaction(unsignedContract, wif, args.amount)
 	if err != nil {
 		return nil, fmt.Errorf("signrawtransaction: %v", err)
 	}
@@ -108,51 +103,49 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 	}, nil
 }
 
-func fundRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, feePerKb btcutil.Amount, amount btcutil.Amount) (fundedTx *wire.MsgTx, fee btcutil.Amount, sourceUTXOs []*insight.UTXO, err error) {
-
+func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.Amount) (*wire.MsgTx, btcutil.Amount, bool, error) {
 	sourceAddress, _ := GenerateNewPublicKey(*wif)
+	sourcePKScript, err := txscript.PayToAddrScript(sourceAddress.AddressPubKeyHash())
+
 	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.AddressPubKeyHash().String())
-	sourceUTXOs = insight.GetMinimalRequiredUTXO(int64(amount), unspentOutputs)
-	availableAmountToSpend := int64(0) // amount in UTXO available
+	sourceUTXOs := insight.GetMinimalRequiredUTXO(int64(amount), unspentOutputs)
+	var availableAmountToSpend int64
 
 	for idx := range sourceUTXOs {
 		availableAmountToSpend += sourceUTXOs[idx].Amount
 		sourceUTXO := wire.NewOutPoint(sourceUTXOs[idx].Hash, sourceUTXOs[idx].TxIndex)
 		sourceTxIn := wire.NewTxIn(sourceUTXO, nil, nil)
 		tx.AddTxIn(sourceTxIn)
+
+		sigScript, err := txscript.SignatureScript(tx, idx, sourcePKScript, txscript.SigHashAll, wif.PrivKey, true)
+		if err != nil {
+			fmt.Errorf("error signing source UTXO's\n")
+		}
+		tx.TxIn[idx].SignatureScript = sigScript
 	}
 
-	//feeAmount := feeEstimator(tx)
-
-	// change address, sent left over UTXO back to user his own address
-	// if there's change left, sent it back to the source wallet
-
-	// the change should be the amount the user has minus what is going to be sent
-	// minus the fee
 	change := availableAmountToSpend - int64(amount)
-	//change -= int64(feeAmount) TODO check
 
-	changeSendToScript, err := txscript.PayToAddrScript(sourceAddress)
+	changeAddress := sourceAddress
+	changeSendToScript, err := txscript.PayToAddrScript(changeAddress)
 	if err != nil {
-		panic(err)
+		return &wire.MsgTx{}, 0, false, fmt.Errorf("change address wrong\n")
 	}
-	// tx out to sent back to user his own address
-	changeOutputsize := wire.NewTxOut(change, changeSendToScript).SerializeSize()
-	fmt.Printf("ChangeOutputSize %d\n", changeOutputsize)
 
-	// recalculate fees TODO find a better way, this isn't right yet
-		feeAmount := feeEstimationBySize(tx.SerializeSize()+changeOutputsize)
+	changeOutput := wire.NewTxOut(change, changeSendToScript)
+	changeOutput.SerializeSize()
 
-		changeOutput := wire.NewTxOut(change, changeSendToScript)
-		tx.AddTxOut(changeOutput)
+	fee := feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize())
+	//calculate fees in and reassign changeOutput so the fees are calculated in
+	change -= int64(fee)
+	changeOutput = wire.NewTxOut(change, changeSendToScript)
 
-	var buf bytes.Buffer
-	buf.Grow(tx.SerializeSize())
-	tx.Serialize(&buf)
+	signedTx := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
+	if err := tx.Serialize(signedTx); err != nil {
+		return &wire.MsgTx{}, 0, false, fmt.Errorf("Failed to sign tx")
+	}
 
-	fmt.Printf("sum output size%d\n", sumOutputSerializeSizes(tx.TxOut))
-
-	return tx, feeAmount, sourceUTXOs, nil
+	return tx, fee, true, nil
 }
 
 // TODO maybe fee per byte to 279
@@ -165,31 +158,6 @@ func feeEstimator(tx *wire.MsgTx, ) (amount btcutil.Amount) {
 func feeEstimationBySize(size int) (amount btcutil.Amount) {
 	feePerByte := 110 // TODO change for alts
 	return btcutil.Amount(feePerByte * size)
-}
-
-func signRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, sourceUTXOs []*insight.UTXO) (*wire.MsgTx, bool, error) {
-
-	sourceAddress, _ := GenerateNewPublicKey(*wif)
-	sourcePKScript, err := txscript.PayToAddrScript(sourceAddress.AddressPubKeyHash())
-	if err != nil {
-		fmt.Errorf("error signing soucePKScript: %s\n", sourcePKScript)
-	}
-
-	for i := range sourceUTXOs {
-		sigScript, err := txscript.SignatureScript(tx, i, sourcePKScript, txscript.SigHashAll, wif.PrivKey, true)
-		if err != nil {
-			fmt.Errorf("error signing source UTXO's\n")
-		}
-		tx.TxIn[i].SignatureScript = sigScript
-	}
-
-	signedTx := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
-	if err := tx.Serialize(signedTx); err != nil {
-		return &wire.MsgTx{}, false, fmt.Errorf("Failed to sign tx")
-	}
-
-	fmt.Printf("signed tx: %s\n", hex.EncodeToString(signedTx.Bytes()))
-	return tx, true, nil
 }
 
 // atomicSwapContract returns an output script that may be redeemed by one of 2 signature scripts:
