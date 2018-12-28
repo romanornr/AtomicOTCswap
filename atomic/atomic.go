@@ -349,6 +349,8 @@ func sha256Hash(x []byte) []byte {
 
 func GetFeePerKB() (useFee, replayFee btcutil.Amount, err error) {
 
+	// TODO fix for multiple coins
+
 	relayFee, _ := btcutil.NewAmount(0.00100000) //rpc call -> getnetworkinfo: relayfee
 	payTxFee, _ :=  btcutil.NewAmount(0.00000000) //rpc call -> getwalletinfo: paytxfee
 
