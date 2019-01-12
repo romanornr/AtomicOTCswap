@@ -7,29 +7,29 @@ import (
 )
 
 type Coin struct {
-	Symbol string
-	Name string
-	Network *Network
-	Insight *Insight
-	TxVersion int32
+	Symbol        string
+	Name          string
+	Network       *Network
+	Insight       *Insight
+	TxVersion     int32
 	MinRelayTxFee float64
 }
 
 type Insight struct {
 	Explorer string
-	Api string
+	Api      string
 }
 
 type Network struct {
-	Name string
-	P2PKH byte
-	P2SH byte
+	Name         string
+	P2PKH        byte
+	P2SH         byte
 	PrivateKeyID byte
-	magic wire.BitcoinNet
+	magic        wire.BitcoinNet
 }
 
-var coins = map[string]Coin {
-	"via": {Name: "viacoin", Symbol: "via", Network: &Network{"viacoin", 0x47,0x21,  0xC7, 0xcbc6680f},
+var coins = map[string]Coin{
+	"via": {Name: "viacoin", Symbol: "via", Network: &Network{Name: "viacoin", P2PKH: 0x47, P2SH: 0x21, PrivateKeyID: 0xC7, magic: 0xcbc6680f},
 		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2, MinRelayTxFee: 0.001,
 	},
 }
