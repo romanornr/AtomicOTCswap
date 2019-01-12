@@ -106,7 +106,8 @@ func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb 
 
 	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, contract)
 	if err != nil {
-		panic(err) /// TODO Something else? Idk yet
+		//expected only to be called with good input
+		panic(err)
 	}
 
 	refundAddr, err := btcutil.NewAddressPubKeyHash(pushes.RefundHash160[:], &chaincfg.MainNetParams)

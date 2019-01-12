@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/btcsuite/golangcrypto/ripemd160"
 	"github.com/go-errors/errors"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/romanornr/AtomicOTCswap/insight"
 	"github.com/viacoin/viad/chaincfg"
 	"github.com/viacoin/viad/chaincfg/chainhash"
@@ -26,6 +27,8 @@ type Command struct {
 }
 
 type contractArgs struct {
+	coin1		*bcoins.Coin
+	coin2		*bcoins.Coin
 	them       *btcutil.AddressPubKeyHash
 	amount     btcutil.Amount
 	locktime   int64
@@ -77,7 +80,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 	unsignedContract := wire.NewMsgTx(txVersion)
 	unsignedContract.AddTxOut(wire.NewTxOut(int64(args.amount), contractP2SHPkScript))
 
-	contractTx, contractFee, complete, err := fundAndSignRawTransaction(unsignedContract, wif, args.amount)
+	contractTx, contractFee, complete, err := fundAndSignRawTransaction(unsignedContract, wif, args.amount, args.coin1)
 	if err != nil {
 		return nil, fmt.Errorf("signrawtransaction: %v", err)
 	}
@@ -103,7 +106,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 	}, nil
 }
 
-func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.Amount) (*wire.MsgTx, btcutil.Amount, bool, error) {
+func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.Amount, coin *bcoins.Coin) (*wire.MsgTx, btcutil.Amount, bool, error) {
 	sourceAddress, _ := GenerateNewPublicKey(*wif)
 	sourcePKScript, err := txscript.PayToAddrScript(sourceAddress.AddressPubKeyHash())
 
@@ -135,7 +138,7 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 	changeOutput := wire.NewTxOut(change, changeSendToScript)
 	changeOutput.SerializeSize()
 
-	fee := feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize())
+	fee := feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize(), coin)
 	//calculate fees in and reassign changeOutput so the fees are calculated in
 	change -= int64(fee)
 	changeOutput = wire.NewTxOut(change, changeSendToScript)
@@ -155,8 +158,8 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 //	return btcutil.Amount(feePerByte * estimatedSize)
 //}
 
-func feeEstimationBySize(size int) (amount btcutil.Amount) {
-	feePerByte := 110 // TODO change for alts
+func feeEstimationBySize(size int, coin *bcoins.Coin) (amount btcutil.Amount) {
+	feePerByte := coin.FeePerByte // TODO change for alts
 	return btcutil.Amount(feePerByte * size)
 }
 

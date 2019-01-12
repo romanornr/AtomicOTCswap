@@ -7,6 +7,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
 	btcutil "github.com/viacoin/viautil"
+	"strings"
 	"time"
 )
 type initiateCmd struct {
@@ -38,10 +39,10 @@ func Initiate(coinTicker string, participantAddr string, wif *btcutil.WIF, amoun
 	}
 
 	cmd := &initiateCmd{counterparty2Addr: counterparty2AddrP2KH, amount: amount2}
-	return cmd.runCommand(wif)
+	return cmd.runCommand(wif, &coin, amount)
 }
 
-func (cmd *initiateCmd) runCommand(wif *btcutil.WIF) error {
+func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) error {
 	var secret [secretSize]byte
 	_, err := rand.Read(secret[:])
 	if err != nil {
@@ -52,6 +53,7 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF) error {
 	locktime := time.Now().Add(10 * time.Minute).Unix() // NEED TO CHANGE
 
 	build, err := buildContract(&contractArgs{
+		coin1: coin,
 		them:       cmd.counterparty2Addr,
 		amount:     cmd.amount,
 		locktime:   locktime,
@@ -62,11 +64,15 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF) error {
 		return err
 	}
 
+	ticker := strings.ToUpper(coin.Symbol)
 	refundTxHash := build.refundTx.TxHash()
 
 	fmt.Printf("Secret:      %x\n", secret)
 	fmt.Printf("Secret hash: %x\n\n", secretHash)
-	fmt.Printf("Contract fee: %v\n", build.contractFee.ToBTC())
+
+	fmt.Printf("Contract amount: %v %s\n", amount, ticker)
+	fmt.Printf("Contract fee: %v %s\n", build.contractFee.ToBTC(), ticker)
+	fmt.Printf("Refund fee:   %v %s\n", build.refundFee.ToBTC(), ticker)
 	fmt.Printf("Contract (%v):\n", build.contractP2SH)
 	fmt.Printf("%x\n\n", build.contract)
 	var contractBuf bytes.Buffer

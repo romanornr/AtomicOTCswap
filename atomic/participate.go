@@ -4,19 +4,27 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/go-errors/errors"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
+	"strings"
 	"time"
 )
 
 type participateCmd struct {
-	counterparty1Addr *btcutil.AddressPubKeyHash
+	counterParty1Addr *btcutil.AddressPubKeyHash
 	amount            btcutil.Amount
-	secretHash        []byte
+	//secretHash        []byte
 }
 
-func Participate(initiatorAddr string, wif *btcutil.WIF, amount float64) error {
-	counterParty1Addr, err := btcutil.DecodeAddress(initiatorAddr, &chaincfg.MainNetParams)
+func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, amount float64) error {
+
+	coin, err := bcoins.SelectCoin(coinTicker)
+	if err != nil {
+		return err
+	}
+
+	counterParty1Addr, err := btcutil.DecodeAddress(participantAddr, &chaincfg.MainNetParams)
 	if err != nil {
 		return fmt.Errorf("failed to decode the address from the participant: %s", err)
 	}
@@ -31,15 +39,16 @@ func Participate(initiatorAddr string, wif *btcutil.WIF, amount float64) error {
 		return err
 	}
 
-	cmd := &participateCmd{counterparty1Addr: counterParty1AddrP2KH, amount: amount2}
-	return cmd.runCommand(wif)
+	cmd := &participateCmd{counterParty1Addr: counterParty1AddrP2KH, amount: amount2}
+	return cmd.runCommand(wif, &coin, amount)
 }
 
-func (cmd *participateCmd) runCommand(wif *btcutil.WIF) error {
+func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) error {
 
 	locktime := time.Now().Add(10 * time.Minute).Unix()
 
 	build, err := buildContract(&contractArgs{
+		coin1:      coin,
 		them:       cmd.counterparty1Addr,
 		amount:     cmd.amount,
 		locktime:   locktime,
@@ -49,21 +58,35 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF) error {
 		return err
 	}
 
-	//refundTxHash := build.refundTx.TxHash()
-	//contractFeePerKb := calcFeePerKb(build.contractFee, build.contractTx.SerializeSize())
-	//refundFeePerKb := calcFeePerKb(build.refundFee, build.refundTx.SerializeSize())
+	ticker := strings.ToUpper(coin.Symbol)
+	refundTxHash := build.refundTx.TxHash()
 
-	build.refundTx.TxHash()
-	calcFeePerKb(build.contractFee, build.contractTx.SerializeSize())
-	calcFeePerKb(build.refundFee, build.refundTx.SerializeSize())
-
+	fmt.Printf("Contract fee: %v %s\n", build.contractFee, ticker)
+	fmt.Printf("Refund fee:   %v %s\n\n", build.refundFee, ticker)
+	fmt.Printf("Contract (%v):\n", build.contractP2SH)
+	fmt.Printf("%x\n\n", build.contract)
 	var contractBuf bytes.Buffer
 	contractBuf.Grow(build.contractTx.SerializeSize())
 	build.contractTx.Serialize(&contractBuf)
-
+	fmt.Printf("Contract transaction (%v):\n", build.contractTxHash)
+	fmt.Printf("%x\n\n", contractBuf.Bytes())
 	var refundBuf bytes.Buffer
 	refundBuf.Grow(build.refundTx.SerializeSize())
 	build.refundTx.Serialize(&refundBuf)
+	fmt.Printf("Refund transaction (%v):\n", &refundTxHash)
+	fmt.Printf("%x\n\n", refundBuf.Bytes())
+
+	//build.refundTx.TxHash()
+	//calcFeePerKb(build.contractFee, build.contractTx.SerializeSize())
+	//calcFeePerKb(build.refundFee, build.refundTx.SerializeSize())
+	//
+	//var contractBuf bytes.Buffer
+	//contractBuf.Grow(build.contractTx.SerializeSize())
+	//build.contractTx.Serialize(&contractBuf)
+	//
+	//var refundBuf bytes.Buffer
+	//refundBuf.Grow(build.refundTx.SerializeSize())
+	//build.refundTx.Serialize(&refundBuf)
 
 	return nil
 }
