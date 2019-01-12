@@ -11,7 +11,7 @@ import (
 	"time"
 )
 type initiateCmd struct {
-	counterparty2Addr *btcutil.AddressPubKeyHash
+	counterParty2Addr *btcutil.AddressPubKeyHash
 	amount            btcutil.Amount
 }
 
@@ -23,12 +23,12 @@ func Initiate(coinTicker string, participantAddr string, wif *btcutil.WIF, amoun
 		return err
 	}
 
-	counterparty2Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
+	counterParty2Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return fmt.Errorf("failed to decode the address from the participant: %s", err)
 	}
 
-	counterparty2AddrP2KH, ok := counterparty2Addr.(*btcutil.AddressPubKeyHash)
+	counterParty2AddrP2KH, ok := counterParty2Addr.(*btcutil.AddressPubKeyHash)
 	if !ok {
 		return errors.New("participant address is not P2KH")
 	}
@@ -38,7 +38,7 @@ func Initiate(coinTicker string, participantAddr string, wif *btcutil.WIF, amoun
 		return err
 	}
 
-	cmd := &initiateCmd{counterparty2Addr: counterparty2AddrP2KH, amount: amount2}
+	cmd := &initiateCmd{counterParty2Addr: counterParty2AddrP2KH, amount: amount2}
 	return cmd.runCommand(wif, &coin, amount)
 }
 
@@ -54,7 +54,7 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount f
 
 	build, err := buildContract(&contractArgs{
 		coin1: coin,
-		them:       cmd.counterparty2Addr,
+		them:       cmd.counterParty2Addr,
 		amount:     cmd.amount,
 		locktime:   locktime,
 		secretHash: secretHash,

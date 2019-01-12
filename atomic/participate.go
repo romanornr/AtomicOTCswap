@@ -2,6 +2,7 @@ package atomic
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
@@ -14,10 +15,10 @@ import (
 type participateCmd struct {
 	counterParty1Addr *btcutil.AddressPubKeyHash
 	amount            btcutil.Amount
-	//secretHash        []byte
+	secretHash        []byte
 }
 
-func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, amount float64) error {
+func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, amount float64, secret string) error {
 
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
@@ -39,17 +40,23 @@ func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, am
 		return err
 	}
 
-	cmd := &participateCmd{counterParty1Addr: counterParty1AddrP2KH, amount: amount2}
+	secretHash, err := hex.DecodeString(secret)
+	if err != nil {
+		return errors.New("secret hash must be hex encoded")
+	}
+
+	cmd := &participateCmd{counterParty1Addr: counterParty1AddrP2KH, amount: amount2, secretHash:secretHash}
 	return cmd.runCommand(wif, &coin, amount)
 }
 
 func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) error {
 
+
 	locktime := time.Now().Add(10 * time.Minute).Unix()
 
 	build, err := buildContract(&contractArgs{
 		coin1:      coin,
-		them:       cmd.counterparty1Addr,
+		them:       cmd.counterParty1Addr,
 		amount:     cmd.amount,
 		locktime:   locktime,
 		secretHash: cmd.secretHash,
