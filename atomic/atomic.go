@@ -148,12 +148,12 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 	return tx, fee, true, nil
 }
 
-// TODO maybe fee per byte to 279
-func feeEstimator(tx *wire.MsgTx, ) (amount btcutil.Amount) {
-	feePerByte := 110 // TODO change for alts
-	estimatedSize := tx.SerializeSize()
-	return btcutil.Amount(feePerByte * estimatedSize)
-}
+//// TODO maybe fee per byte to 279
+//func feeEstimator(tx *wire.MsgTx, ) (amount btcutil.Amount) {
+//	feePerByte := 110 // TODO change for alts
+//	estimatedSize := tx.SerializeSize()
+//	return btcutil.Amount(feePerByte * estimatedSize)
+//}
 
 func feeEstimationBySize(size int) (amount btcutil.Amount) {
 	feePerByte := 110 // TODO change for alts
