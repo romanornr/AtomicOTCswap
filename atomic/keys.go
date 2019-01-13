@@ -1,6 +1,7 @@
 package atomic
 
 import (
+	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/viacoin/viad/btcec"
 	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
@@ -16,7 +17,7 @@ func GenerateNewWIF() (*btcutil.WIF, error){
 	return wif, err
 }
 
-func GenerateNewPublicKey(wif btcutil.WIF) (*btcutil.AddressPubKey, error){
-	pk, err := btcutil.NewAddressPubKey(wif.PrivKey.PubKey().SerializeCompressed(), &chaincfg.MainNetParams)
+func GenerateNewPublicKey(wif btcutil.WIF, coin *bcoins.Coin) (*btcutil.AddressPubKey, error) {
+	pk, err := btcutil.NewAddressPubKey(wif.PrivKey.PubKey().SerializeCompressed(), coin.Network.ChainCgfMainNetParams())
 	return pk, err
 }

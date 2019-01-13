@@ -47,10 +47,10 @@ func Redeem(coinTicker string, contractHex string, contractTransaction string, s
 	}
 
 	cmd := &redeemCmd{contract: contract, contractTx: &contractTx, secret: secret}
-	return cmd.runRedeem(wif, coin)
+	return cmd.runRedeem(wif, &coin)
 }
 
-func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin bcoins.Coin) error {
+func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, cmd.contract)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin bcoins.Coin) error {
 		return errors.New("transaction does not contain  a contract output")
 	}
 
-	addr, err := getRawChangeAddress(wif)
+	addr, err := getRawChangeAddress(wif, coin)
 	if err != nil {
 		return fmt.Errorf("getrawchangeAddress: %v\n", err)
 	}
@@ -108,7 +108,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin bcoins.Coin) error {
 		return fmt.Errorf("redeem output value of %v %s is dust", btcutil.Amount(redeemTx.TxOut[0].Value).ToBTC(), strings.ToUpper(coin.Symbol))
 	}
 
-	redeemSig, redeemPubKey, err := createSig(redeemTx, 0, cmd.contract, recipientAddr, wif)
+	redeemSig, redeemPubKey, err := createSig(redeemTx, 0, cmd.contract, recipientAddr, wif, coin)
 	if err != nil {
 		return err
 	}

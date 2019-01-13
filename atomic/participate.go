@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
-	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
 	"strings"
 	"time"
@@ -25,7 +24,7 @@ func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, am
 		return err
 	}
 
-	counterParty1Addr, err := btcutil.DecodeAddress(participantAddr, &chaincfg.MainNetParams)
+	counterParty1Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return fmt.Errorf("failed to decode the address from the participant: %s", err)
 	}

@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+
 	"github.com/btcsuite/golangcrypto/ripemd160"
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/romanornr/AtomicOTCswap/insight"
-	"github.com/viacoin/viad/chaincfg"
 	"github.com/viacoin/viad/chaincfg/chainhash"
 	"github.com/viacoin/viad/txscript"
 	"github.com/viacoin/viad/wire"
@@ -27,8 +27,8 @@ type Command struct {
 }
 
 type contractArgs struct {
-	coin1		*bcoins.Coin
-	coin2		*bcoins.Coin
+	coin1      *bcoins.Coin
+	coin2      *bcoins.Coin
 	them       *btcutil.AddressPubKeyHash
 	amount     btcutil.Amount
 	locktime   int64
@@ -49,8 +49,8 @@ type builtContract struct {
 
 func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error) {
 
-	refundAddress, _ := GenerateNewPublicKey(*wif)
-	refundAddr, _ := btcutil.DecodeAddress(refundAddress.EncodeAddress(), &chaincfg.MainNetParams)
+	refundAddress, _ := GenerateNewPublicKey(*wif, args.coin1)
+	refundAddr, _ := btcutil.DecodeAddress(refundAddress.EncodeAddress(), args.coin1.Network.ChainCgfMainNetParams())
 
 	refundAddrHash, ok := refundAddr.(interface {
 		Hash160() *[ripemd160.Size]byte
@@ -63,7 +63,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 	if err != nil {
 		return nil, err
 	}
-	contractP2SH, err := btcutil.NewAddressScriptHash(contract, &chaincfg.MainNetParams)
+	contractP2SH, err := btcutil.NewAddressScriptHash(contract, args.coin1.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 
 	contractTxHash := contractTx.TxHash()
 
-	refundTx, refundFee, err := buildRefund(contract, contractTx, feePerKb, minFeePerKb, wif)
+	refundTx, refundFee, err := buildRefund(contract, contractTx, feePerKb, minFeePerKb, wif, args.coin1)
 	if err != nil {
 		return nil, err
 	}
@@ -107,10 +107,10 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 }
 
 func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.Amount, coin *bcoins.Coin) (*wire.MsgTx, btcutil.Amount, bool, error) {
-	sourceAddress, _ := GenerateNewPublicKey(*wif)
+	sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
 	sourcePKScript, err := txscript.PayToAddrScript(sourceAddress.AddressPubKeyHash())
 
-	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.AddressPubKeyHash().String())
+	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.AddressPubKeyHash().String(), coin)
 	sourceUTXOs := insight.GetMinimalRequiredUTXO(int64(amount), unspentOutputs)
 	var availableAmountToSpend int64
 
@@ -228,7 +228,7 @@ func GetFeePerKB() (useFee, replayFee btcutil.Amount, err error) {
 	// TODO fix for multiple coins
 
 	relayFee, _ := btcutil.NewAmount(0.00100000) //rpc call -> getnetworkinfo: relayfee
-	payTxFee, _ :=  btcutil.NewAmount(0.00000000) //rpc call -> getwalletinfo: paytxfee
+	payTxFee, _ := btcutil.NewAmount(0.00000000) //rpc call -> getwalletinfo: paytxfee
 
 	if payTxFee != 0 {
 		maxFee := payTxFee

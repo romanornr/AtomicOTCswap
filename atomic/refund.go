@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/go-errors/errors"
-	"github.com/viacoin/viad/chaincfg"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/viacoin/viad/txscript"
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
@@ -35,7 +35,7 @@ func Refund(contractHex string, contractTransaction string, wif *btcutil.WIF) (*
 	return &refundCmd{contract: contract, contractTx: &contractTx}, nil
 }
 
-func (cmd *refundCmd) runRefund(wif *btcutil.WIF) error {
+func (cmd *refundCmd) runRefund(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, cmd.contract)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (cmd *refundCmd) runRefund(wif *btcutil.WIF) error {
 		return err
 	}
 
-	refundTx, refundFee, err := buildRefund(cmd.contract, cmd.contractTx, feePerKb, minFeePerKb, wif)
+	refundTx, refundFee, err := buildRefund(cmd.contract, cmd.contractTx, feePerKb, minFeePerKb, wif, coin)
 	if err != nil {
 		return err
 	}
@@ -71,8 +71,8 @@ func calcFeePerKb(absoluteFee btcutil.Amount, serializeSize int) float64 {
 	return float64(absoluteFee) / float64(serializeSize) / 1e5
 }
 
-func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb btcutil.Amount, wif *btcutil.WIF) (refundTx *wire.MsgTx, refundFee btcutil.Amount, err error) {
-	contractP2SH, err := btcutil.NewAddressScriptHash(contract, &chaincfg.MainNetParams)
+func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb btcutil.Amount, wif *btcutil.WIF, coin *bcoins.Coin) (refundTx *wire.MsgTx, refundFee btcutil.Amount, err error) {
+	contractP2SH, err := btcutil.NewAddressScriptHash(contract, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -93,7 +93,7 @@ func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb 
 		return nil, 0, errors.New("contract tx does not contain a P2SH contract payment")
 	}
 
-	address, err := getRawChangeAddress(wif)
+	address, err := getRawChangeAddress(wif, coin)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -110,7 +110,7 @@ func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb 
 		panic(err)
 	}
 
-	refundAddr, err := btcutil.NewAddressPubKeyHash(pushes.RefundHash160[:], &chaincfg.MainNetParams)
+	refundAddr, err := btcutil.NewAddressPubKeyHash(pushes.RefundHash160[:], coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -129,7 +129,7 @@ func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb 
 	txIn.Sequence = 0
 	refundTx.AddTxIn(txIn)
 
-	refundSig, refundPubKey, err := createSig(refundTx, 0, contract, refundAddr, wif) //TODO signing
+	refundSig, refundPubKey, err := createSig(refundTx, 0, contract, refundAddr, wif, coin) //TODO signing
 	if err != nil {
 		return nil, 0, err
 	}
@@ -167,8 +167,8 @@ func refundP2SHContract(contract, sig, pubkey []byte) ([]byte, error) {
 	return builder.Script()
 }
 
-func createSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF) (sig, pubkey []byte, err error) {
-	sourceAddress, _ := GenerateNewPublicKey(*wif)
+func createSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF, coin *bcoins.Coin) (sig, pubkey []byte, err error) {
+	sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
 	if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
 		return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
 	}
@@ -183,10 +183,10 @@ func createSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, w
 // getRawChangeAddress calls the getrawchangeaddress JSON-RPC method.  It is
 // implemented manually as the rpcclient implementation always passes the
 // account parameter which was removed in Viacoin Core 0.15.
-func getRawChangeAddress(wif *btcutil.WIF) (btcutil.Address, error) {
+func getRawChangeAddress(wif *btcutil.WIF, coin *bcoins.Coin) (btcutil.Address, error) {
 
-	addr, _ := GenerateNewPublicKey(*wif)
-	address, err := btcutil.DecodeAddress(addr.EncodeAddress(), &chaincfg.MainNetParams)
+	addr, _ := GenerateNewPublicKey(*wif, coin)
+	address, err := btcutil.DecodeAddress(addr.EncodeAddress(), coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return nil, err
 	}

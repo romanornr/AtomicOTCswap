@@ -3,6 +3,7 @@ package insight
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"log"
 	"net/http"
 	"sort"
@@ -20,8 +21,8 @@ type UTXO struct {
 	PKScript  []byte
 }
 
-func GetUnspentOutputs(publicKey string) []*UTXO {
-	insightExplorer := "https://explorer.viacoin.org/api"
+func GetUnspentOutputs(publicKey string, coin *bcoins.Coin) []*UTXO {
+	insightExplorer := coin.Insight.Api
 	url := fmt.Sprintf("%s/addr/%s/utxo", insightExplorer, publicKey)
 	fmt.Println(url)
 

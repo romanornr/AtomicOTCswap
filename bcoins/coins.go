@@ -13,7 +13,7 @@ type Coin struct {
 	Insight       *Insight
 	TxVersion     int32
 	MinRelayTxFee float64
-	FeePerByte int
+	FeePerByte    int
 }
 
 type Insight struct {
@@ -22,20 +22,24 @@ type Insight struct {
 }
 
 type Network struct {
-	Name         string
-	P2PKH        byte
-	P2SH         byte
-	PrivateKeyID byte
-	magic        wire.BitcoinNet
+	Name           string
+	P2PKH          byte
+	P2SH           byte
+	PrivateKeyID   byte
+	HDCoinType     uint32
+	HDPrivateKeyID [4]byte
+	HDPublicKeyID  [4]byte
+	magic          wire.BitcoinNet
 }
 
 var coins = map[string]Coin{
-	"via": {Name: "viacoin", Symbol: "via", Network: &Network{Name: "viacoin", P2PKH: 0x47, P2SH: 0x21, PrivateKeyID: 0xC7, magic: 0xcbc6680f},
-		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2, MinRelayTxFee: 0.001, FeePerByte:110,
+	"via": {Name: "viacoin", Symbol: "via", Network: &Network{Name: "viacoin", P2PKH: 0x47, P2SH: 0x21, PrivateKeyID: 0xC7, HDCoinType: 14, magic: 0xcbc6680f},
+		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2, MinRelayTxFee: 0.001, FeePerByte: 110,
 	},
 
-	"ltc": {Name: "litecoin", Symbol: "ltc", Network: &Network{Name: "litecoin", P2PKH: 0x30, P2SH: 0x05, PrivateKeyID: 0xb0, magic: 0xfbc0b6db},
-		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2, MinRelayTxFee: 0.001, FeePerByte:280,
+	"ltc": {Name: "litecoin", Symbol: "ltc",
+		Network: &Network{Name: "litecoin", P2PKH: 0x30, P2SH: 0x32, PrivateKeyID: 0xB0, HDCoinType: 2, HDPrivateKeyID: [4]byte{0x04, 0x88, 0xad, 0xe4}, HDPublicKeyID: [4]byte{0x04, 0x88, 0xb2, 0x1e}, magic: 0xfbc0b6db},
+		Insight: &Insight{"https://insight.litecore.io", "https://insight.litecore.io/api"}, TxVersion: 2, MinRelayTxFee: 0.001, FeePerByte: 280,
 	},
 }
 
@@ -55,6 +59,9 @@ func (network Network) ChainCgfMainNetParams() *chaincfg.Params {
 	networkParams.Net = network.magic
 	networkParams.PubKeyHashAddrID = network.P2PKH
 	networkParams.ScriptHashAddrID = network.P2SH
+	networkParams.HDCoinType = network.HDCoinType
+	networkParams.HDPrivateKeyID = network.HDPrivateKeyID
+	networkParams.HDPublicKeyID = network.HDPublicKeyID
 	networkParams.PrivateKeyID = network.PrivateKeyID
 	return networkParams
 }
