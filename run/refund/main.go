@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/romanornr/AtomicOTCswap/atomic"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
 	btcutil "github.com/viacoin/viautil"
@@ -13,8 +12,6 @@ func main() {
 	wif, _ := btcutil.DecodeWIF("WVtSmyCEuUNeXgPEnC4uEPJPRswpCjS2uUCe6wykRaYEBre9Y4fX")
 	coin, _ := bcoins.SelectCoin("via")
 
-	err := atomic.Refund(contractHex, transactionHex, wif, coin)
-	if err != nil {
-		fmt.Println(err)
-	}
+	refund, _ := atomic.Refund(contractHex, transactionHex, wif)
+	refund.Run(wif, &coin)
 }

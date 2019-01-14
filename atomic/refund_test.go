@@ -16,7 +16,7 @@ func TestRefund(t *testing.T) {
 
 	coin, _ := bcoins.SelectCoin("via")
 
-	err = a.runRefund(wif, &coin)
+	err = a.Run(wif, &coin)
 	if err != nil {
 		fmt.Println(err)
 	}

@@ -10,7 +10,6 @@ import (
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
 	"github.com/viacoin/viawallet/wallet/txrules"
-	"strings"
 )
 
 type refundCmd struct {
@@ -18,26 +17,25 @@ type refundCmd struct {
 	contractTx *wire.MsgTx
 }
 
-func Refund(contractHex string, contractTransaction string, wif *btcutil.WIF, coin bcoins.Coin) error {
+func Refund(contractHex string, contractTransaction string, wif *btcutil.WIF) (*refundCmd, error) {
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
-		fmt.Errorf("failed to decode contract: %v\n", err)
+		return &refundCmd{}, fmt.Errorf("failed to decode contract: %v\n", err)
 	}
 	contractTxBytes, err := hex.DecodeString(contractTransaction)
 	if err != nil {
-		fmt.Errorf("failed to decode contract transaction: %v\n", err)
+		return &refundCmd{}, fmt.Errorf("failed to decode contract transaction: %v\n", err)
 	}
 	var contractTx wire.MsgTx
 	err = contractTx.Deserialize(bytes.NewReader(contractTxBytes))
 	if err != nil {
-		fmt.Errorf("failed to decode transaction: %v\n", err)
+		return &refundCmd{}, fmt.Errorf("failed to decode transaction: %v\n", err)
 	}
 
-	refund := &refundCmd{contract: contract, contractTx: &contractTx}
-	return refund.RunRefund(wif, &coin)
+	return &refundCmd{contract: contract, contractTx: &contractTx}, nil
 }
 
-func (cmd *refundCmd) RunRefund(wif *btcutil.WIF, coin *bcoins.Coin) error {
+func (cmd *refundCmd) Run(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, cmd.contract)
 	if err != nil {
 		return err
@@ -61,10 +59,9 @@ func (cmd *refundCmd) RunRefund(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	buf.Grow(refundTx.SerializeSize())
 	refundTx.Serialize(&buf)
 
-	ticker := strings.ToUpper(coin.Symbol)
-	//refundFeePerKb := calcFeePerKb(refundFee, refundTx.SerializeSize())
+	refundFeePerKb := calcFeePerKb(refundFee, refundTx.SerializeSize())
 
-	fmt.Printf("Refund fee: %v %s\n", refundFee.ToBTC(), ticker)
+	fmt.Printf("Refund fee: %v (%0.8f VIA/kB\n\n", refundFee, refundFeePerKb)
 	fmt.Printf("Refund Transaction: (%v):\n", &refundTxHash)
 
 	return nil
@@ -173,7 +170,6 @@ func refundP2SHContract(contract, sig, pubkey []byte) ([]byte, error) {
 func createSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF, coin *bcoins.Coin) (sig, pubkey []byte, err error) {
 	sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
 	if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
-		fmt.Println("rekt")
 		return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
 	}
 
