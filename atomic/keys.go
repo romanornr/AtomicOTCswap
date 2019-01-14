@@ -18,6 +18,7 @@ func GenerateNewWIF() (*btcutil.WIF, error){
 }
 
 func GenerateNewPublicKey(wif btcutil.WIF, coin *bcoins.Coin) (*btcutil.AddressPubKey, error) {
+	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
 	pk, err := btcutil.NewAddressPubKey(wif.PrivKey.PubKey().SerializeCompressed(), coin.Network.ChainCgfMainNetParams())
 	return pk, err
 }

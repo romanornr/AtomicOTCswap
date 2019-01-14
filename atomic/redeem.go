@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
+	"github.com/viacoin/viad/chaincfg"
 	"github.com/viacoin/viad/txscript"
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
@@ -25,6 +26,8 @@ func Redeem(coinTicker string, contractHex string, contractTransaction string, s
 	if err != nil {
 		return err
 	}
+
+	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
 
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
@@ -62,6 +65,8 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	if err != nil {
 		return err
 	}
+
+	//recipientAddr, err := GenerateNewPublicKey(*wif, coin)
 	contractHash := btcutil.Hash160(cmd.contract)
 	contractOut := -1
 	for i, out := range cmd.contractTx.TxOut {
@@ -81,6 +86,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	if err != nil {
 		return fmt.Errorf("getrawchangeAddress: %v\n", err)
 	}
+
 	outScript, err := txscript.PayToAddrScript(addr)
 	if err != nil {
 		return err
@@ -108,7 +114,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 		return fmt.Errorf("redeem output value of %v %s is dust", btcutil.Amount(redeemTx.TxOut[0].Value).ToBTC(), strings.ToUpper(coin.Symbol))
 	}
 
-	redeemSig, redeemPubKey, err := createSig(redeemTx, 0, cmd.contract, recipientAddr, wif, coin)
+	redeemSig, redeemPubKey, err := createRedeemSig(redeemTx, 0, cmd.contract, recipientAddr, wif, coin)
 	if err != nil {
 		return err
 	}
@@ -125,18 +131,18 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	buf.Grow(redeemTx.SerializeSize())
 	redeemTx.Serialize(&buf)
 
-	if verify {
-		e, err := txscript.NewEngine(cmd.contractTx.TxOut[contractOutPoint.Index].PkScript,
-			redeemTx, 0, txscript.StandardVerifyFlags, txscript.NewSigCache(10),
-			txscript.NewTxSigHashes(redeemTx), cmd.contractTx.TxOut[contractOut].Value)
-		if err != nil {
-			panic(err)
-		}
-		err = e.Execute()
-		if err != nil {
-			panic(err)
-		}
-	}
+	//if verify {
+	//	e, err := txscript.NewEngine(cmd.contractTx.TxOut[contractOutPoint.Index].PkScript,
+	//		redeemTx, 0, txscript.StandardVerifyFlags, txscript.NewSigCache(10),
+	//		txscript.NewTxSigHashes(redeemTx), cmd.contractTx.TxOut[contractOut].Value)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	err = e.Execute()
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//}
 
 	fmt.Printf("Redeem fee: %v (%0.8f %s/kB)\n\n", fee, redeemFeePerKb, coin.Symbol)
 	fmt.Printf("Redeem transaction (%v):\n", &redeemTxHash)
@@ -144,6 +150,20 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 
 	return nil
 }
+
+func createRedeemSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF, coin *bcoins.Coin) (sig, pubkey []byte, err error) {
+	//sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
+	//if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
+	//	return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
+	//}
+
+	sig, err = txscript.RawTxInSignature(tx, idx, pkScript, txscript.SigHashAll, wif.PrivKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	return sig, wif.PrivKey.PubKey().SerializeCompressed(), nil
+}
+
 
 // estimateRedeemSerializeSize returns a worst case serialize size estimates for
 // a transaction that redeems an atomic swap P2SH output.

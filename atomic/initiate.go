@@ -53,7 +53,7 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount f
 	}
 
 	secretHash := sha256Hash(secret[:])
-	locktime := time.Now().Add(10 * time.Minute).Unix() // NEED TO CHANGE
+	locktime := time.Now().Add(12 * time.Hour).Unix() // NEED TO CHANGE
 
 	build, err := buildContract(&contractArgs{
 		coin1: coin,

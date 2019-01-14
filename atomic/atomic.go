@@ -51,6 +51,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 
 	refundAddress, _ := GenerateNewPublicKey(*wif, args.coin1)
 	refundAddr, _ := btcutil.DecodeAddress(refundAddress.EncodeAddress(), args.coin1.Network.ChainCgfMainNetParams())
+	fmt.Println(refundAddr.EncodeAddress())
 
 	refundAddrHash, ok := refundAddr.(interface {
 		Hash160() *[ripemd160.Size]byte

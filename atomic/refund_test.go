@@ -2,6 +2,7 @@ package atomic
 
 import (
 	"fmt"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
 	btcutil "github.com/viacoin/viautil"
 	"testing"
 )
@@ -13,7 +14,9 @@ func TestRefund(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	err = a.runRefund(wif)
+	coin, _ := bcoins.SelectCoin("via")
+
+	err = a.runRefund(wif, &coin)
 	if err != nil {
 		fmt.Println(err)
 	}

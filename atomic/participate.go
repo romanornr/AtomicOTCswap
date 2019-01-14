@@ -54,7 +54,7 @@ func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, am
 func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) error {
 
 
-	locktime := time.Now().Add(10 * time.Minute).Unix()
+	locktime := time.Now().Add(12 * time.Hour).Unix()
 
 	build, err := buildContract(&contractArgs{
 		coin1:      coin,
@@ -70,8 +70,8 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 	ticker := strings.ToUpper(coin.Symbol)
 	refundTxHash := build.refundTx.TxHash()
 
-	fmt.Printf("Contract fee: %v %s\n", build.contractFee, ticker)
-	fmt.Printf("Refund fee:   %v %s\n\n", build.refundFee, ticker)
+	fmt.Printf("Contract fee: %v %s\n", build.contractFee.ToBTC(), ticker)
+	fmt.Printf("Refund fee:   %v %s\n\n", build.refundFee.ToBTC(), ticker)
 	fmt.Printf("Contract (%v):\n", build.contractP2SH)
 	fmt.Printf("%x\n\n", build.contract)
 	var contractBuf bytes.Buffer

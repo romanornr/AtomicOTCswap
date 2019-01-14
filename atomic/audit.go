@@ -100,7 +100,7 @@ func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error)
 	return contract, nil
 }
 
-func (contract AuditedContract) show() error{
+func (contract AuditedContract) Show() error{
 	fmt.Printf("Contract address:        %v\n", contract.Address)
 	fmt.Printf("Contract value:          %v\n", contract.Value)
 	fmt.Printf("Recipient address:       %v\n", contract.RecipientAddress)
