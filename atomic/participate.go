@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
+	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
 	"strings"
 	"time"
@@ -23,6 +24,8 @@ func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, am
 	if err != nil {
 		return err
 	}
+
+	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
 
 	counterParty1Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {

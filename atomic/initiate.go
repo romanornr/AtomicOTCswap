@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
+	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
 	"strings"
 	"time"
@@ -23,15 +24,12 @@ func Initiate(coinTicker string, participantAddr string, wif *btcutil.WIF, amoun
 		return err
 	}
 
-	fmt.Println(coin.Network.ChainCgfMainNetParams().PubKeyHashAddrID)
-	fmt.Println(coin.Network.P2PKH)
+	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
 
 	counterParty2Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return fmt.Errorf("failed to decode the address from the participant: %s\n", err)
 	}
-
-	fmt.Println("gi")
 
 	counterParty2AddrP2KH, ok := counterParty2Addr.(*btcutil.AddressPubKeyHash)
 	if !ok {
