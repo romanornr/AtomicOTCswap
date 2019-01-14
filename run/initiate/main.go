@@ -3,24 +3,24 @@ package main
 import (
 	"fmt"
 	"github.com/romanornr/AtomicOTCswap/atomic"
-	"github.com/viacoin/viautil"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
+	btcutil "github.com/viacoin/viautil"
 )
 
 func main() {
 	//initiatorWIF, _ := atomic.GenerateNewWIF()
-	//partyBAddress := "VdMPvn7vUTSzbYjiMDs1jku9wAh1Ri2Y1A"
+	partyBAddress := "VnRi5kfigWPgDAz62mY4oLKRruErZwTZJB"
 
-	partyBAddress := "LS8MLtQfz4nmDHeaEFd2rMBZCyywmRRchj"
+	//partyBAddress := "LS8MLtQfz4nmDHeaEFd2rMBZCyywmRRchj"
 
 	//fmt.Println(initiatorWIF.String())
+	wif, _ := btcutil.DecodeWIF("WVtSmyCEuUNeXgPEnC4uEPJPRswpCjS2uUCe6wykRaYEBre9Y4fX")
 
-	wif, _ := viautil.DecodeWIF("6vC5Y2CuYgW4vMJ1D2iSKWP8zTyAcPHopxAwpF2BYPqR7ioFAzQ")
+	coin, _ := bcoins.SelectCoin("via")
+	pk, _ := atomic.GenerateNewPublicKey(*wif, &coin)
+	fmt.Printf("public key to deposit 0.001 on: %s\n", pk.AddressPubKeyHash())
 
-	//coin, _ := bcoins.SelectCoin("ltc")
-	//pk, _ := atomic.GenerateNewPublicKey(*wif, &coin)
-	//fmt.Printf("public key to deposit 0.001 on: %s\n", pk.AddressPubKeyHash())
-
-	err := atomic.Initiate("ltc", partyBAddress, wif, 0.05)
+	err := atomic.Initiate("via", partyBAddress, wif, 0.049) //TODO fix fee with inputs
 
 	if err != nil {
 		fmt.Printf("%s", err)
