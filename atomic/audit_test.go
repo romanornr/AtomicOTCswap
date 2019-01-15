@@ -12,12 +12,12 @@ func TestAuditContract(t *testing.T) {
 	}
 
 	expectedAddress := "EdAm9zSqK24KgHDZ9WmyQ9A98Ytwff5g8d"
-	if contract.Address.String() != expectedAddress {
-		t.Errorf("Expected contract address to be %s but instead got %s\n", expectedAddress, contract.Address.String())
+	if contract.Address != expectedAddress {
+		t.Errorf("Expected contract address to be %s but instead got %s\n", expectedAddress, contract.Address)
 	}
 
 	expectedValue, _  := btcutil.NewAmount(0.001)
-	if contract.Value != expectedValue {
+	if contract.Value != expectedValue.ToBTC() {
 		t.Errorf("Expected contract value to be %v but got %v instead\n", expectedValue, contract.Value)
 	}
 
@@ -27,13 +27,12 @@ func TestAuditContract(t *testing.T) {
 	}
 
 	expectedRecipientAddress := "VdMPvn7vUTSzbYjiMDs1jku9wAh1Ri2Y1A"
-	if expectedRecipientAddress != contract.RecipientRefundAddress.String() {
-		t.Errorf("Expected contract recipient address to be %s but got %s instead\n", expectedRecipientAddress, contract.RecipientRefundAddress.String())
+	if expectedRecipientAddress != contract.RecipientRefundAddress {
+		t.Errorf("Expected contract recipient address to be %s but got %s instead\n", expectedRecipientAddress, contract.RecipientRefundAddress)
 	}
 
 	expectedRecipientRefundAddress := "VdMPvn7vUTSzbYjiMDs1jku9wAh1Ri2Y1A"
-	if contract.RecipientRefundAddress.String() != expectedRecipientRefundAddress {
-		t.Errorf("Expected contract recipient refund address to be %s but got %s instead\n", expectedRecipientRefundAddress, contract.RecipientRefundAddress.String())
+	if contract.RecipientRefundAddress != expectedRecipientRefundAddress {
+		t.Errorf("Expected contract recipient refund address to be %s but got %s instead\n", expectedRecipientRefundAddress, contract.RecipientRefundAddress)
 	}
-	contract.Show()
 }

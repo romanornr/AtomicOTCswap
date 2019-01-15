@@ -9,6 +9,7 @@ import (
 	"github.com/viacoin/viad/txscript"
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
+	"strings"
 	"time"
 )
 
@@ -18,12 +19,18 @@ type AuditContractCmd struct {
 }
 
 type AuditedContract struct {
-	Address                *btcutil.AddressScriptHash `json:"address"`
-	Value                  btcutil.Amount             `json:"value"`
-	RecipientAddress       *btcutil.AddressPubKeyHash `json:"recipient_address"`
-	RecipientRefundAddress *btcutil.AddressPubKeyHash `json:"recipient_refund_address"`
-	LockTime               int64                      `json:"lock_time"`
-	AtomicSwapDataPushes   *txscript.AtomicSwapDataPushes
+	Coin                   string         `json:"contract_coin"`
+	Address                string         `json:"contract_address"`
+	valueSat               btcutil.Amount `json:"contract_value_satoshi"`
+	Value                  float64        `json:"contract_value"`
+	ValueCoin              string         `json:"value_coin"`
+	RecipientAddress       string         `json:"recipient_address"`
+	RecipientRefundAddress string         `json:"recipient_refund_address"`
+	SecretHash             string         `json:"secret_hash"`
+	LockTime               int64          `json:"lock_time"`
+	LockTimeReachedIn      time.Duration  `json:"lock_time_reached_in"`
+	LockTimeExpired        bool           `json:"lock_time_expired"`
+	atomicSwapDataPushes *txscript.AtomicSwapDataPushes
 }
 
 func AuditContract(coinTicker string, contractHex string, contractTransaction string) (AuditedContract, error) {
@@ -52,6 +59,7 @@ func AuditContract(coinTicker string, contractHex string, contractTransaction st
 }
 
 func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error) {
+	cryptocurrencyName := coin.Name
 	contractHash160 := btcutil.Hash160(cmd.contract)
 	contractOut := -1
 	for i, out := range cmd.contractTx.TxOut {
@@ -94,29 +102,39 @@ func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error)
 	}
 
 	contractValue := btcutil.Amount(cmd.contractTx.TxOut[contractOut].Value)
+	ValueCoin := fmt.Sprintf("%f %s", contractValue.ToBTC(), strings.ToUpper(coin.Symbol))
 
-	contract := AuditedContract{Address: contractAddr, Value: contractValue, RecipientAddress: recipientAddr, RecipientRefundAddress: refundAddr, LockTime: pushes.LockTime, AtomicSwapDataPushes:pushes}
+	var lockTimeExpired bool
+	var lockTimeReachedIn time.Duration
 
-	return contract, nil
-}
-
-func (contract AuditedContract) Show() error{
-	fmt.Printf("Contract address:        %v\n", contract.Address)
-	fmt.Printf("Contract value:          %v\n", contract.Value)
-	fmt.Printf("Recipient address:       %v\n", contract.RecipientAddress)
-	fmt.Printf("Recipient refund address: %v\n\n", contract.RecipientRefundAddress)
-
-	if contract.AtomicSwapDataPushes.LockTime >= int64(txscript.LockTimeThreshold) {
-		t := time.Unix(contract.AtomicSwapDataPushes.LockTime, 0)
+	if pushes.LockTime >= int64(txscript.LockTimeThreshold) {
+		t := time.Unix(pushes.LockTime, 0)
 		fmt.Printf("Locktime: %v\n", t.UTC())
 		reachedAt := time.Until(t).Truncate(time.Second)
 		if reachedAt > 0 {
+			lockTimeReachedIn = reachedAt
 			fmt.Printf("Locktime reached in %v\n", reachedAt)
 		} else {
+			lockTimeExpired = true
 			fmt.Printf("Contract refund time lock has expired !\n")
-			return nil
 		}
-		fmt.Printf("Locktime: block %v\n", contract.AtomicSwapDataPushes.LockTime)
+		fmt.Printf("Locktime: block %v\n", pushes.LockTime)
 	}
-	return nil
+
+	contract := AuditedContract{
+		Coin:                   cryptocurrencyName,
+		Address:                contractAddr.EncodeAddress(),
+		valueSat:               contractValue,
+		Value:                  contractValue.ToBTC(),
+		ValueCoin:              ValueCoin,
+		RecipientAddress:       recipientAddr.EncodeAddress(),
+		RecipientRefundAddress: refundAddr.EncodeAddress(),
+		SecretHash:             fmt.Sprintf("%x", pushes.SecretHash),
+		LockTime:               pushes.LockTime,
+		LockTimeReachedIn:      lockTimeReachedIn,
+		LockTimeExpired:        lockTimeExpired,
+		atomicSwapDataPushes:   pushes,
+	}
+
+	return contract, nil
 }

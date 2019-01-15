@@ -82,10 +82,14 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 		return errors.New("transaction does not contain  a contract output")
 	}
 
-	addr, err := getRawChangeAddress(wif, coin)
+	//addr, err := getRawChangeAddress(wif, coin)
+	addr, _ := GenerateNewPublicKey(*wif, coin)
 	if err != nil {
 		return fmt.Errorf("getrawchangeAddress: %v\n", err)
 	}
+
+	fmt.Println(addr.EncodeAddress())
+	//addr, _ := btcutil.AddressPubKeyHash(pushes.RecipientHash160[:]
 
 	outScript, err := txscript.PayToAddrScript(addr)
 	if err != nil {
@@ -131,18 +135,18 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	buf.Grow(redeemTx.SerializeSize())
 	redeemTx.Serialize(&buf)
 
-	//if verify {
-	//	e, err := txscript.NewEngine(cmd.contractTx.TxOut[contractOutPoint.Index].PkScript,
-	//		redeemTx, 0, txscript.StandardVerifyFlags, txscript.NewSigCache(10),
-	//		txscript.NewTxSigHashes(redeemTx), cmd.contractTx.TxOut[contractOut].Value)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	err = e.Execute()
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//}
+	if verify {
+		e, err := txscript.NewEngine(cmd.contractTx.TxOut[contractOutPoint.Index].PkScript,
+			redeemTx, 0, txscript.StandardVerifyFlags, txscript.NewSigCache(10),
+			txscript.NewTxSigHashes(redeemTx), cmd.contractTx.TxOut[contractOut].Value)
+		if err != nil {
+			panic(err)
+		}
+		err = e.Execute()
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	fmt.Printf("Redeem fee: %v (%0.8f %s/kB)\n\n", fee, redeemFeePerKb, coin.Symbol)
 	fmt.Printf("Redeem transaction (%v):\n", &redeemTxHash)
@@ -152,10 +156,12 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 }
 
 func createRedeemSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF, coin *bcoins.Coin) (sig, pubkey []byte, err error) {
-	//sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
-	//if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
-	//	return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
-	//}
+	sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
+	fmt.Println(addr.EncodeAddress())
+	fmt.Println(sourceAddress.EncodeAddress())
+	if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
+		return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
+	}
 
 	sig, err = txscript.RawTxInSignature(tx, idx, pkScript, txscript.SigHashAll, wif.PrivKey)
 	if err != nil {
