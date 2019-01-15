@@ -25,7 +25,7 @@ type AuditedContract struct {
 	Value                  float64        `json:"contract_value"`
 	ValueCoin              string         `json:"value_coin"`
 	RecipientAddress       string         `json:"recipient_address"`
-	RecipientRefundAddress string         `json:"recipient_refund_address"`
+	AuthorRefundAddress string         `json:"author_refund_address"`
 	SecretHash             string         `json:"secret_hash"`
 	LockTime               int64          `json:"lock_time"`
 	LockTimeReachedIn      time.Duration  `json:"lock_time_reached_in"`
@@ -96,7 +96,8 @@ func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error)
 	if err != nil {
 		return AuditedContract{}, err
 	}
-	refundAddr, err := btcutil.NewAddressPubKeyHash(pushes.RefundHash160[:], coin.Network.ChainCgfMainNetParams())
+
+	AuthorRefundAddr, err := btcutil.NewAddressPubKeyHash(pushes.RefundHash160[:], coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return AuditedContract{}, err
 	}
@@ -128,7 +129,7 @@ func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error)
 		Value:                  contractValue.ToBTC(),
 		ValueCoin:              ValueCoin,
 		RecipientAddress:       recipientAddr.EncodeAddress(),
-		RecipientRefundAddress: refundAddr.EncodeAddress(),
+		AuthorRefundAddress: AuthorRefundAddr.EncodeAddress(),
 		SecretHash:             fmt.Sprintf("%x", pushes.SecretHash),
 		LockTime:               pushes.LockTime,
 		LockTimeReachedIn:      lockTimeReachedIn,
