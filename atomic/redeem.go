@@ -91,7 +91,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	fmt.Println(addr.EncodeAddress())
 	//addr, _ := btcutil.AddressPubKeyHash(pushes.RecipientHash160[:]
 
-	outScript, err := txscript.PayToAddrScript(addr)
+	outScript, err := txscript.PayToAddrScript(addr)  // TODO Check this, it needs to change to recipient address, not own address
 	if err != nil {
 		return err
 	}
