@@ -141,7 +141,9 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 	fee := feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize(), coin)
 	//calculate fees in and reassign changeOutput so the fees are calculated in
 	change -= int64(fee)
+	fmt.Println(change)
 	changeOutput = wire.NewTxOut(change, changeSendToScript)
+	tx.AddTxOut(changeOutput)
 
 	signedTx := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
 	if err := tx.Serialize(signedTx); err != nil {
