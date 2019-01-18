@@ -19,17 +19,17 @@ type participateCmd struct {
 }
 
 type ParticipatedContract struct {
-	Coin                   string
-	Unit                   string
-	ContractAmount         float64
-	ContractFee            float64
-	ContractRefundFee      float64
-	ContractAddress        string
-	ContractHex            string
-	ContractTransactionID  string
-	ContractTransactionHex string
-	RefundTransactionID    string
-	RefundTransaction      string
+	Coin                   string  `json:"coin"`
+	Unit                   string  `json:"unit"`
+	ContractAmount         float64 `json:"contract_amount"`
+	ContractFee            float64 `json:"contract_fee"`
+	ContractRefundFee      float64 `json:"contract_refund_fee"`
+	ContractAddress        string  `json:"contract_address"`
+	ContractHex            string  `json:"contract_hex"`
+	ContractTransactionID  string  `json:"contract_transaction_id"`
+	ContractTransactionHex string  `json:"contract_transaction_hex"`
+	RefundTransactionID    string  `json:"refund_transaction_id"`
+	RefundTransaction      string  `json:"refund_transaction"`
 }
 
 func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, amount float64, secret string) (contract ParticipatedContract, err error) {

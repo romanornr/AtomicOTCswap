@@ -18,19 +18,19 @@ type initiateCmd struct {
 }
 
 type InitiatedContract struct {
-	Coin string
-	Unit string
-	ContractAmount float64
-	ContractFee float64
-	ContractRefundFee float64
-	ContractAddress string
-	ContractHex string
-	ContractTransactionID string
-	ContractTransactionHex string
-	RefundTransactionID string
-	RefundTransaction string
-	Secret string
-	SecretHash string
+	Coin                   string  `json:"coin"`
+	Unit                   string  `json:"unit"`
+	ContractAmount         float64 `json:"contract_amount"`
+	ContractFee            float64 `json:"contract_fee"`
+	ContractRefundFee      float64 `json:"contract_refund_fee"`
+	ContractAddress        string  `json:"contract_address"`
+	ContractHex            string  `json:"contract_hex"`
+	ContractTransactionID  string  `json:"contract_transaction_id"`
+	ContractTransactionHex string  `json:"contract_transaction_hex"`
+	RefundTransactionID    string  `json:"refund_transaction_id"`
+	RefundTransaction      string  `json:"refund_transaction"`
+	Secret                 string  `json:"secret"`
+	SecretHash             string  `json:"secret_hash"`
 }
 
 func Initiate(coinTicker string, participantAddr string, amount float64, wif *btcutil.WIF) (InitiatedContract, error) {
@@ -96,24 +96,24 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount f
 
 	contract := InitiatedContract{
 
-		Secret: fmt.Sprintf("%x", secret),
+		Secret:     fmt.Sprintf("%x", secret),
 		SecretHash: fmt.Sprintf("%x", secretHash),
 
 		Coin: coin.Name,
 		Unit: unit,
 
-		ContractAmount:amount,
-		ContractFee: build.contractFee.ToBTC(),
+		ContractAmount:    amount,
+		ContractFee:       build.contractFee.ToBTC(),
 		ContractRefundFee: build.refundFee.ToBTC(),
 
 		ContractAddress: fmt.Sprintf("%v", build.contractP2SH),
-		ContractHex: fmt.Sprintf("%x", build.contract),
+		ContractHex:     fmt.Sprintf("%x", build.contract),
 
-		ContractTransactionID: fmt.Sprintf("%x", build.contractTxHash),
+		ContractTransactionID:  fmt.Sprintf("%x", build.contractTxHash),
 		ContractTransactionHex: fmt.Sprintf("%x", contractBuf.Bytes()),
 
 		RefundTransactionID: fmt.Sprintf("%v", &refundTxHash),
-		RefundTransaction: fmt.Sprintf("%x", refundBuf.Bytes()),
+		RefundTransaction:   fmt.Sprintf("%x", refundBuf.Bytes()),
 	}
 	return contract, nil
 }
