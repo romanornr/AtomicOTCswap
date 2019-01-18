@@ -19,6 +19,7 @@ func createRouter() *mux.Router {
 	api.HandleFunc("/initiate", InitiateHandler).Methods("POST")
 	api.HandleFunc("/participate", ParticipateHandler).Methods("POST")
 	api.HandleFunc("/redeem", RedemptionHandler).Methods("POST")
+	api.HandleFunc("/extractsecret", SecretHandler).Methods("POST")
 	http.Handle("/", r)
 	return r
 }
@@ -77,6 +78,14 @@ func RedemptionHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(redemption)
+}
+
+func SecretHandler(w http.ResponseWriter, req *http.Request) {
+	secret, err := atomic.ExtractSecret(req.FormValue("redemptionTransaction"), req.FormValue("secretHash"))
+	if err != nil {
+		log.Printf("error extracting secret: %s\n", err)
+	}
+	json.NewEncoder(w).Encode(secret)
 }
 
 // audit a contract by giving the coin symbol, contract hex and contract transaction
