@@ -19,7 +19,7 @@ type initiateCmd struct {
 
 type InitiatedContract struct {
 	Coin string
-	Ticker string
+	Unit string
 	ContractAmount float64
 	ContractFee float64
 	ContractRefundFee float64
@@ -83,7 +83,7 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount f
 		return InitiatedContract{}, err
 	}
 
-	ticker := strings.ToUpper(coin.Symbol)
+	unit := strings.ToUpper(coin.Symbol)
 	refundTxHash := build.refundTx.TxHash()
 
 	var contractBuf bytes.Buffer
@@ -100,7 +100,7 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount f
 		SecretHash: fmt.Sprintf("%x", secretHash),
 
 		Coin: coin.Name,
-		Ticker: ticker,
+		Unit: unit,
 
 		ContractAmount:amount,
 		ContractFee: build.contractFee.ToBTC(),
