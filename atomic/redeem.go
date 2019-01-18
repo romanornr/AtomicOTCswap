@@ -20,50 +20,58 @@ type redeemCmd struct {
 	secret     []byte
 }
 
+type Redemption struct {
+	Coin string `json:"coin"`
+	Unit string `json:"unit"`
+	Fee float64 `json:"fee"`
+	TransactionHash string `json:"transaction_hash"`
+	TransactionHex string `json:"transaction_hex"`
+}
+
 // coinTicker should be the coin the participant wants to redeem from the counter party
-func Redeem(coinTicker string, contractHex string, contractTransaction string, secretHex string, wif *btcutil.WIF) error {
+func Redeem(coinTicker string, contractHex string, contractTransaction string, secretHex string, wif *btcutil.WIF) (redemption Redemption, err error) {
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
-		return err
+		return redemption, err
 	}
 
 	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
 
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
-		return fmt.Errorf("failed to decode contract: %v\n", err)
+		return redemption, fmt.Errorf("failed to decode contract: %v\n", err)
 	}
 
 	contractTxBytes, err := hex.DecodeString(contractTransaction)
 	if err != nil {
-		return fmt.Errorf("failed to decode contract transaction: %v\n", err)
+		return redemption, fmt.Errorf("failed to decode contract transaction: %v\n", err)
 	}
 	var contractTx wire.MsgTx
 	err = contractTx.Deserialize(bytes.NewReader(contractTxBytes))
 	if err != nil {
-		return fmt.Errorf("failed to decode contract transaction: %v\n", err)
+		return redemption, fmt.Errorf("failed to decode contract transaction: %v\n", err)
 	}
 
 	secret, err := hex.DecodeString(secretHex)
 	if err != nil {
-		return fmt.Errorf("failed to decode secret: %v\n", err)
+		return redemption, fmt.Errorf("failed to decode secret: %v\n", err)
 	}
 
 	cmd := &redeemCmd{contract: contract, contractTx: &contractTx, secret: secret}
 	return cmd.runRedeem(wif, &coin)
 }
 
-func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
+func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption Redemption, err error) {
 	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, cmd.contract)
 	if err != nil {
-		return err
+		return redemption, err
 	}
 	if pushes == nil {
-		return errors.New("contract is not an atomic swap script recognized by this tool")
+		return redemption, errors.New("contract is not an atomic swap script recognized by this tool")
 	}
 	recipientAddr, err := btcutil.NewAddressPubKeyHash(pushes.RecipientHash160[:], coin.Network.ChainCgfMainNetParams())
 	if err != nil {
-		return err
+		return redemption, err
 	}
 
 	//recipientAddr, err := GenerateNewPublicKey(*wif, coin)
@@ -79,13 +87,13 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	}
 
 	if contractOut == -1 {
-		return errors.New("transaction does not contain  a contract output")
+		return redemption, errors.New("transaction does not contain  a contract output")
 	}
 
 	//addr, err := getRawChangeAddress(wif, coin)
 	addr, _ := GenerateNewPublicKey(*wif, coin)
 	if err != nil {
-		return fmt.Errorf("getrawchangeAddress: %v\n", err)
+		return redemption, fmt.Errorf("getrawchangeAddress: %v\n", err)
 	}
 
 	fmt.Println(addr.EncodeAddress())
@@ -93,7 +101,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 
 	outScript, err := txscript.PayToAddrScript(addr)  // TODO Check this, it needs to change to recipient address, not own address
 	if err != nil {
-		return err
+		return redemption, err
 	}
 
 	contractTxHash := cmd.contractTx.TxHash()
@@ -104,7 +112,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 
 	feePerKb, minFeePerKb, err := GetFeePerKB()
 	if err != nil {
-		return err
+		return redemption, err
 	}
 
 	redeemTx := wire.NewMsgTx(coin.TxVersion)
@@ -115,21 +123,21 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 	fee := txrules.FeeForSerializeSize(feePerKb, redeemSize)
 	redeemTx.TxOut[0].Value = cmd.contractTx.TxOut[contractOut].Value - int64(fee)
 	if txrules.IsDustOutput(redeemTx.TxOut[0], minFeePerKb) {
-		return fmt.Errorf("redeem output value of %v %s is dust", btcutil.Amount(redeemTx.TxOut[0].Value).ToBTC(), strings.ToUpper(coin.Symbol))
+		return redemption, fmt.Errorf("redeem output value of %v %s is dust", btcutil.Amount(redeemTx.TxOut[0].Value).ToBTC(), strings.ToUpper(coin.Symbol))
 	}
 
 	redeemSig, redeemPubKey, err := createRedeemSig(redeemTx, 0, cmd.contract, recipientAddr, wif, coin)
 	if err != nil {
-		return err
+		return redemption, err
 	}
 	redeemScriptSig, err := redeemP2SHContract(cmd.contract, redeemSig, redeemPubKey, cmd.secret)
 	if err != nil {
-		return err
+		return redemption, err
 	}
 	redeemTx.TxIn[0].SignatureScript = redeemScriptSig
 
 	redeemTxHash := redeemTx.TxHash()
-	redeemFeePerKb := calcFeePerKb(fee, redeemTx.SerializeSize())
+	//redeemFeePerKb := calcFeePerKb(fee, redeemTx.SerializeSize())
 
 	var buf bytes.Buffer
 	buf.Grow(redeemTx.SerializeSize())
@@ -148,11 +156,20 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) error {
 		}
 	}
 
-	fmt.Printf("Redeem fee: %v (%0.8f %s/kB)\n\n", fee, redeemFeePerKb, coin.Symbol)
-	fmt.Printf("Redeem transaction (%v):\n", &redeemTxHash)
-	fmt.Printf("%x\n\n", buf.Bytes())
+	//fmt.Printf("Redeem fee: %v (%0.8f %s/kB)\n\n", fee, redeemFeePerKb, coin.Symbol)
+	//fmt.Printf("Redeem transaction (%v):\n", &redeemTxHash)
+	//fmt.Printf("%x\n\n", buf.Bytes())
 
-	return nil
+	redemption = Redemption{
+		Coin: coin.Name,
+		Unit: strings.ToUpper(coin.Symbol),
+		Fee: fee.ToBTC(),
+		TransactionHash: fmt.Sprintf("%v", &redeemTxHash),
+		TransactionHex: fmt.Sprintf("%x", buf.Bytes()),
+
+	}
+
+	return redemption, nil
 }
 
 func createRedeemSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF, coin *bcoins.Coin) (sig, pubkey []byte, err error) {

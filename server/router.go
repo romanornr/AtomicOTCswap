@@ -18,6 +18,7 @@ func createRouter() *mux.Router {
 	api.HandleFunc("/audit/{coin}/{contractHex}/{contractTransaction}", AuditHandler).Methods("GET")
 	api.HandleFunc("/initiate", InitiateHandler).Methods("POST")
 	api.HandleFunc("/participate", ParticipateHandler).Methods("POST")
+	api.HandleFunc("/redeem", RedemptionHandler).Methods("POST")
 	http.Handle("/", r)
 	return r
 }
@@ -61,8 +62,21 @@ func ParticipateHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(contract)
+}
 
+func RedemptionHandler(w http.ResponseWriter, req *http.Request) {
 
+	wif, err := btcutil.DecodeWIF(req.FormValue("wif"))
+	if err != nil {
+		log.Printf("error decoding private key in wif format: %s\n", err)
+	}
+
+	redemption, err := atomic.Redeem(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"), req.FormValue("secretHex"), wif)
+	if err != nil {
+		log.Printf("error redemption: %s\n", err)
+	}
+
+	json.NewEncoder(w).Encode(redemption)
 }
 
 // audit a contract by giving the coin symbol, contract hex and contract transaction
