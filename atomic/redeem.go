@@ -173,12 +173,12 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 }
 
 func createRedeemSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF, coin *bcoins.Coin) (sig, pubkey []byte, err error) {
-	sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
-	fmt.Println(addr.EncodeAddress())
-	fmt.Println(sourceAddress.EncodeAddress())
-	if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
-		return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
-	}
+	//sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
+	//fmt.Println(addr.EncodeAddress())
+	//fmt.Println(sourceAddress.EncodeAddress())
+	//if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
+	//	return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
+	//}
 
 	sig, err = txscript.RawTxInSignature(tx, idx, pkScript, txscript.SigHashAll, wif.PrivKey)
 	if err != nil {

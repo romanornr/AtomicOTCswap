@@ -57,6 +57,7 @@ func ParticipateHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Printf("error decoding private key in wif format: %s\n", err)
 	}
+
 	contract, err := atomic.Participate(req.FormValue("coin"), req.FormValue("initiatorAddress"), wif, amount, req.FormValue("secret"))
 	if err != nil {
 		log.Printf("error participating contract: %s\n", err)
