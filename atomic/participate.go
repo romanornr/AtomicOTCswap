@@ -18,41 +18,54 @@ type participateCmd struct {
 	secretHash        []byte
 }
 
-func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, amount float64, secret string) error {
+type ParticipatedContract struct {
+	Coin                   string
+	Unit                   string
+	ContractAmount         float64
+	ContractFee            float64
+	ContractRefundFee      float64
+	ContractAddress        string
+	ContractHex            string
+	ContractTransactionID  string
+	ContractTransactionHex string
+	RefundTransactionID    string
+	RefundTransaction      string
+}
+
+func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, amount float64, secret string) (contract ParticipatedContract, err error) {
 
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
-		return err
+		return contract, err
 	}
 
 	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
 
 	counterParty1Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
-		return fmt.Errorf("failed to decode the address from the participant: %s", err)
+		return contract, fmt.Errorf("failed to decode the address from the participant: %s", err)
 	}
 
 	counterParty1AddrP2KH, ok := counterParty1Addr.(*btcutil.AddressPubKeyHash)
 	if !ok {
-		return errors.New("participant address is not P2KH")
+		return contract, errors.New("participant address is not P2KH")
 	}
 
 	amount2, err := btcutil.NewAmount(amount)
 	if err != nil {
-		return err
+		return contract, err
 	}
 
 	secretHash, err := hex.DecodeString(secret)
 	if err != nil {
-		return errors.New("secret hash must be hex encoded")
+		return contract, errors.New("secret hash must be hex encoded")
 	}
 
-	cmd := &participateCmd{counterParty1Addr: counterParty1AddrP2KH, amount: amount2, secretHash:secretHash}
+	cmd := &participateCmd{counterParty1Addr: counterParty1AddrP2KH, amount: amount2, secretHash: secretHash}
 	return cmd.runCommand(wif, &coin, amount)
 }
 
-func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) error {
-
+func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) (contract ParticipatedContract, err error) {
 
 	locktime := time.Now().Add(12 * time.Hour).Unix()
 
@@ -64,38 +77,35 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 		secretHash: cmd.secretHash,
 	}, wif)
 	if err != nil {
-		return err
+		return contract, err
 	}
 
-	ticker := strings.ToUpper(coin.Symbol)
+	unit := strings.ToUpper(coin.Symbol)
 	refundTxHash := build.refundTx.TxHash()
 
-	fmt.Printf("Contract fee: %v %s\n", build.contractFee.ToBTC(), ticker)
-	fmt.Printf("Refund fee:   %v %s\n\n", build.refundFee.ToBTC(), ticker)
-	fmt.Printf("Contract (%v):\n", build.contractP2SH)
-	fmt.Printf("%x\n\n", build.contract)
 	var contractBuf bytes.Buffer
 	contractBuf.Grow(build.contractTx.SerializeSize())
 	build.contractTx.Serialize(&contractBuf)
-	fmt.Printf("Contract transaction (%v):\n", build.contractTxHash)
-	fmt.Printf("%x\n\n", contractBuf.Bytes())
+
 	var refundBuf bytes.Buffer
 	refundBuf.Grow(build.refundTx.SerializeSize())
 	build.refundTx.Serialize(&refundBuf)
-	fmt.Printf("Refund transaction (%v):\n", &refundTxHash)
-	fmt.Printf("%x\n\n", refundBuf.Bytes())
 
-	//build.refundTx.TxHash()
-	//calcFeePerKb(build.contractFee, build.contractTx.SerializeSize())
-	//calcFeePerKb(build.refundFee, build.refundTx.SerializeSize())
-	//
-	//var contractBuf bytes.Buffer
-	//contractBuf.Grow(build.contractTx.SerializeSize())
-	//build.contractTx.Serialize(&contractBuf)
-	//
-	//var refundBuf bytes.Buffer
-	//refundBuf.Grow(build.refundTx.SerializeSize())
-	//build.refundTx.Serialize(&refundBuf)
+	contract = ParticipatedContract{
+		Coin: coin.Name,
+		Unit: unit,
 
-	return nil
+		ContractAmount:    amount,
+		ContractFee:       build.contractFee.ToBTC(),
+		ContractRefundFee: build.refundFee.ToBTC(),
+		ContractAddress:   fmt.Sprintf("%v", build.contractP2SH),
+
+		ContractTransactionID:  fmt.Sprintf("%x", build.contractTxHash),
+		ContractTransactionHex: fmt.Sprintf("%x", contractBuf.Bytes()),
+
+		RefundTransactionID: fmt.Sprintf("%v", &refundTxHash),
+		RefundTransaction:   fmt.Sprintf("%x", refundBuf.Bytes()),
+	}
+
+	return contract, err
 }
