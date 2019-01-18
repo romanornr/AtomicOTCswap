@@ -7,10 +7,12 @@ import (
 )
 
 func Start() {
-	fmt.Println("HTTP server started...")
+
+	host := "127.0.0.1:8000"
+	fmt.Printf("HTTP server started at %s\n", host)
 
 	router := createRouter()
-	err := http.ListenAndServe("127.0.0.1:8000", router)
+	err := http.ListenAndServe(host, router)
 
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
