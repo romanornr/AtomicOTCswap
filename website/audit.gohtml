@@ -11,7 +11,7 @@
         <div class="form-row">
         <div class="form-group col-md-4">
             <label for="coin">Asset</label>
-            <select name="coin" id="coin" class="form-control">
+            <select name="coin" id="coin" class="form-control" required>
                 <option disabled selected value> -- select an option -- </option>
                 <option value="btc">Bitcoin</option>
                 <option value="via">Viacoin</option>
@@ -23,11 +23,11 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="contractHex">Contract Hex</label>
-                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="" autocomplete="off">
+                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="" autocomplete="off" required>
             </div>
             <div class="form-group">
                 <label for="contractTransaction">Contract Transaction</label>
-                <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="" autocomplete="off">
+                <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="" autocomplete="off" required>
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Audit</button>
