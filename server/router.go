@@ -13,7 +13,9 @@ import (
 
 func createRouter() *mux.Router {
 	r := mux.NewRouter()
+	r.HandleFunc("/initiate", InitiateSiteHandler).Methods("GET")
 	r.HandleFunc("/audit", AuditSiteHandler).Methods("GET")
+
 	api := r.PathPrefix("/api").Subrouter()
 	//api.HandleFunc("/audit/{asset}/{contractHex}/{contractTransaction}", AuditHandler).Methods("GET")
 	api.HandleFunc("/audit", AuditHandler).Methods("POST")
@@ -25,6 +27,13 @@ func createRouter() *mux.Router {
 	return r
 }
 
+func InitiateSiteHandler(w http.ResponseWriter, r *http.Request) {
+	err :=  tpl.ExecuteTemplate(w, "initiate.gohtml", nil)
+	if err != nil {
+		fmt.Println("error template")
+	}
+}
+
 // initiate a contract by parsing the post request
 // it parses the coin symbol, counter party address, amount and the wif
 func InitiateHandler(w http.ResponseWriter, req *http.Request) {
@@ -34,7 +43,7 @@ func InitiateHandler(w http.ResponseWriter, req *http.Request) {
 		log.Printf("amount should be a float. example: 0.02")
 	}
 
-	contract, err := atomic.Initiate(req.FormValue("coin"), req.FormValue("counter_party_2_addr"), amount, req.FormValue("wif"))
+	contract, err := atomic.Initiate(req.FormValue("coin"), req.FormValue("counterPartyAddr"), amount, req.FormValue("wif"))
 	if err != nil {
 		log.Printf("erorr initiating contract: %s\n", err)
 	}
@@ -49,7 +58,7 @@ func ParticipateHandler(w http.ResponseWriter, req *http.Request) {
 		log.Printf("amount should be a float. example: 0.02")
 	}
 
-	contract, err := atomic.Participate(req.FormValue("coin"), req.FormValue("initiatorAddress"), req.FormValue("wif"), amount, req.FormValue("secret"))
+	contract, err := atomic.Participate(req.FormValue("coin"), req.FormValue("counterPartyAddr"), req.FormValue("wif"), amount, req.FormValue("secret"))
 	if err != nil {
 		log.Printf("error participating contract: %s\n", err)
 	}
