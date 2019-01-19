@@ -8,6 +8,7 @@ import (
 	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
+	"log"
 	"strings"
 	"time"
 )
@@ -32,7 +33,7 @@ type ParticipatedContract struct {
 	RefundTransaction      string  `json:"refund_transaction"`
 }
 
-func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, amount float64, secret string) (contract ParticipatedContract, err error) {
+func Participate(coinTicker string, participantAddr string, WIFstring string, amount float64, secret string) (contract ParticipatedContract, err error) {
 
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
@@ -40,6 +41,11 @@ func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, am
 	}
 
 	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
+
+	wif, err := btcutil.DecodeWIF(WIFstring)
+	if err != nil {
+		log.Printf("error decoding private key in wif format: %s\n", err)
+	}
 
 	counterParty1Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
@@ -67,7 +73,7 @@ func Participate(coinTicker string, participantAddr string, wif *btcutil.WIF, am
 
 func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) (contract ParticipatedContract, err error) {
 
-	locktime := time.Now().Add(12 * time.Hour).Unix()
+	locktime := time.Now().Add(1 * time.Hour).Unix()
 
 	build, err := buildContract(&contractArgs{
 		coin1:      coin,

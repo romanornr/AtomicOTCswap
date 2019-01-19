@@ -11,6 +11,7 @@ import (
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
 	"github.com/viacoin/viawallet/wallet/txrules"
+	"log"
 	"strings"
 )
 
@@ -29,13 +30,18 @@ type Redemption struct {
 }
 
 // coinTicker should be the coin the participant wants to redeem from the counter party
-func Redeem(coinTicker string, contractHex string, contractTransaction string, secretHex string, wif *btcutil.WIF) (redemption Redemption, err error) {
+func Redeem(coinTicker string, contractHex string, contractTransaction string, secretHex string, WIFstring string) (redemption Redemption, err error) {
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
 		return redemption, err
 	}
 
 	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
+
+	wif, err := btcutil.DecodeWIF(WIFstring)
+	if err != nil {
+		log.Printf("error decoding private key in wif format: %s\n", err)
+	}
 
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
@@ -74,6 +80,8 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 		return redemption, err
 	}
 
+	//recipientAddr, err := btcutil.DecodeAddress("VnRi5kfigWPgDAz62mY4oLKRruErZwTZJB", coin.Network.ChainCgfMainNetParams())
+
 	//recipientAddr, err := GenerateNewPublicKey(*wif, coin)
 	contractHash := btcutil.Hash160(cmd.contract)
 	contractOut := -1
@@ -87,19 +95,10 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 	}
 
 	if contractOut == -1 {
-		return redemption, errors.New("transaction does not contain  a contract output")
+		return redemption, errors.New("transaction does not contain a contract output")
 	}
 
-	//addr, err := getRawChangeAddress(wif, coin)
-	addr, _ := GenerateNewPublicKey(*wif, coin)
-	if err != nil {
-		return redemption, fmt.Errorf("getrawchangeAddress: %v\n", err)
-	}
-
-	fmt.Println(addr.EncodeAddress())
-	//addr, _ := btcutil.AddressPubKeyHash(pushes.RecipientHash160[:]
-
-	outScript, err := txscript.PayToAddrScript(addr)  // TODO Check this, it needs to change to recipient address, not own address
+	outScript, err := txscript.PayToAddrScript(recipientAddr)
 	if err != nil {
 		return redemption, err
 	}
@@ -126,10 +125,12 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 		return redemption, fmt.Errorf("redeem output value of %v %s is dust", btcutil.Amount(redeemTx.TxOut[0].Value).ToBTC(), strings.ToUpper(coin.Symbol))
 	}
 
-	redeemSig, redeemPubKey, err := createRedeemSig(redeemTx, 0, cmd.contract, recipientAddr, wif, coin)
-	if err != nil {
-		return redemption, err
-	}
+	redeemSig, redeemPubKey, _ := createRedeemSig(redeemTx, 0, cmd.contract, recipientAddr, wif, coin)
+	//if err != nil {
+	//	return redemption, err
+	//}
+
+
 	redeemScriptSig, err := redeemP2SHContract(cmd.contract, redeemSig, redeemPubKey, cmd.secret)
 	if err != nil {
 		return redemption, err
@@ -143,6 +144,10 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 	buf.Grow(redeemTx.SerializeSize())
 	redeemTx.Serialize(&buf)
 
+	fmt.Printf("Redeem fee: %v %s\n\n", fee, coin.Symbol)
+	fmt.Printf("Redeem transaction (%v):\n", &redeemTxHash)
+	fmt.Printf("%x\n\n", buf.Bytes())
+
 	if verify {
 		e, err := txscript.NewEngine(cmd.contractTx.TxOut[contractOutPoint.Index].PkScript,
 			redeemTx, 0, txscript.StandardVerifyFlags, txscript.NewSigCache(10),
@@ -155,10 +160,6 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 			panic(err)
 		}
 	}
-
-	//fmt.Printf("Redeem fee: %v (%0.8f %s/kB)\n\n", fee, redeemFeePerKb, coin.Symbol)
-	//fmt.Printf("Redeem transaction (%v):\n", &redeemTxHash)
-	//fmt.Printf("%x\n\n", buf.Bytes())
 
 	redemption = Redemption{
 		Coin: coin.Name,
@@ -179,12 +180,11 @@ func createRedeemSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Addr
 	//if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
 	//	return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
 	//}
-
 	sig, err = txscript.RawTxInSignature(tx, idx, pkScript, txscript.SigHashAll, wif.PrivKey)
 	if err != nil {
 		return nil, nil, err
 	}
-	return sig, wif.PrivKey.PubKey().SerializeCompressed(), nil
+	return sig, addr.ScriptAddress(), nil
 }
 
 

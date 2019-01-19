@@ -8,6 +8,7 @@ import (
 	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
+	"log"
 	"strings"
 	"time"
 )
@@ -33,7 +34,7 @@ type InitiatedContract struct {
 	SecretHash             string  `json:"secret_hash"`
 }
 
-func Initiate(coinTicker string, participantAddr string, amount float64, wif *btcutil.WIF) (InitiatedContract, error) {
+func Initiate(coinTicker string, participantAddr string, amount float64, WIFstring string) (InitiatedContract, error) {
 
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
@@ -41,6 +42,11 @@ func Initiate(coinTicker string, participantAddr string, amount float64, wif *bt
 	}
 
 	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
+
+	wif, err := btcutil.DecodeWIF(WIFstring)
+	if err != nil {
+		log.Printf("error decoding private key in wif format: %s\n", err)
+	}
 
 	counterParty2Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
@@ -69,7 +75,7 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount f
 	}
 
 	secretHash := sha256Hash(secret[:])
-	locktime := time.Now().Add(12 * time.Hour).Unix() // NEED TO CHANGE
+	locktime := time.Now().Add(1 * time.Hour).Unix() // NEED TO CHANGE
 
 	build, err := buildContract(&contractArgs{
 		coin1:      coin,

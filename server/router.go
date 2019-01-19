@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/romanornr/AtomicOTCswap/atomic"
-	btcutil "github.com/viacoin/viautil"
 	"log"
 	"net/http"
 	"strconv"
@@ -33,12 +32,7 @@ func InitiateHandler(w http.ResponseWriter, req *http.Request) {
 		log.Printf("amount should be a float. example: 0.02")
 	}
 
-	wif, err := btcutil.DecodeWIF(req.FormValue("wif"))
-	if err != nil {
-		log.Printf("error decoding private key in wif format: %s\n", err)
-	}
-
-	contract, err := atomic.Initiate(req.FormValue("coin"), req.FormValue("counter_party_2_addr"), amount, wif)
+	contract, err := atomic.Initiate(req.FormValue("coin"), req.FormValue("counter_party_2_addr"), amount, req.FormValue("wif"))
 	if err != nil {
 		log.Printf("erorr initiating contract: %s\n", err)
 	}
@@ -53,12 +47,7 @@ func ParticipateHandler(w http.ResponseWriter, req *http.Request) {
 		log.Printf("amount should be a float. example: 0.02")
 	}
 
-	wif, err := btcutil.DecodeWIF(req.FormValue("wif"))
-	if err != nil {
-		log.Printf("error decoding private key in wif format: %s\n", err)
-	}
-
-	contract, err := atomic.Participate(req.FormValue("coin"), req.FormValue("initiatorAddress"), wif, amount, req.FormValue("secret"))
+	contract, err := atomic.Participate(req.FormValue("coin"), req.FormValue("initiatorAddress"), req.FormValue("wif"), amount, req.FormValue("secret"))
 	if err != nil {
 		log.Printf("error participating contract: %s\n", err)
 	}
@@ -68,12 +57,7 @@ func ParticipateHandler(w http.ResponseWriter, req *http.Request) {
 
 func RedemptionHandler(w http.ResponseWriter, req *http.Request) {
 
-	wif, err := btcutil.DecodeWIF(req.FormValue("wif"))
-	if err != nil {
-		log.Printf("error decoding private key in wif format: %s\n", err)
-	}
-
-	redemption, err := atomic.Redeem(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"), req.FormValue("secretHex"), wif)
+	redemption, err := atomic.Redeem(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"), req.FormValue("secretHex"), req.FormValue("wif"))
 	if err != nil {
 		log.Printf("error redemption: %s\n", err)
 	}
