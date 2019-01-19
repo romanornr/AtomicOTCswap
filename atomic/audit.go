@@ -19,21 +19,23 @@ type AuditContractCmd struct {
 }
 
 type AuditedContract struct {
-	Coin                   string         `json:"contract_coin"`
-	Address                string         `json:"contract_address"`
-	valueSat               btcutil.Amount `json:"contract_value_satoshi"`
-	Value                  float64        `json:"contract_value"`
-	ValueCoin              string         `json:"value_coin"`
-	RecipientAddress       string         `json:"recipient_address"`
-	AuthorRefundAddress string         `json:"author_refund_address"`
-	SecretHash             string         `json:"secret_hash"`
-	LockTime               int64          `json:"lock_time"`
-	LockTimeReachedIn      time.Duration  `json:"lock_time_reached_in"`
-	LockTimeExpired        bool           `json:"lock_time_expired"`
+	Asset                string         `json:"contract_asset"`
+	Address              string         `json:"contract_address"`
+	valueSat             btcutil.Amount `json:"contract_value_satoshi"`
+	Value                float64        `json:"contract_value"`
+	ValueAsset           string         `json:"value_asset"`
+	Unit                 string         `json:"unit"`
+	RecipientAddress     string         `json:"recipient_address"`
+	AuthorRefundAddress  string         `json:"author_refund_address"`
+	SecretHash           string         `json:"secret_hash"`
+	LockTime             int64          `json:"lock_time"`
+	LockTimeReachedIn    time.Duration  `json:"lock_time_reached_in"`
+	LockTimeExpired      bool           `json:"lock_time_expired"`
 	atomicSwapDataPushes *txscript.AtomicSwapDataPushes
 }
 
 func AuditContract(coinTicker string, contractHex string, contractTransaction string) (AuditedContract, error) {
+	fmt.Println(coinTicker)
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
 		return AuditedContract{}, err
@@ -59,7 +61,6 @@ func AuditContract(coinTicker string, contractHex string, contractTransaction st
 }
 
 func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error) {
-	cryptocurrencyName := coin.Name
 	contractHash160 := btcutil.Hash160(cmd.contract)
 	contractOut := -1
 	for i, out := range cmd.contractTx.TxOut {
@@ -103,7 +104,7 @@ func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error)
 	}
 
 	contractValue := btcutil.Amount(cmd.contractTx.TxOut[contractOut].Value)
-	ValueCoin := fmt.Sprintf("%f %s", contractValue.ToBTC(), strings.ToUpper(coin.Symbol))
+	ValueAsset := fmt.Sprintf("%f %s", contractValue.ToBTC(), strings.ToUpper(coin.Symbol))
 
 	var lockTimeExpired bool
 	var lockTimeReachedIn time.Duration
@@ -123,19 +124,19 @@ func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error)
 	}
 
 	contract := AuditedContract{
-		Coin:                   cryptocurrencyName,
-		Address:                contractAddr.EncodeAddress(),
-		valueSat:               contractValue,
-		Value:                  contractValue.ToBTC(),
-		ValueCoin:              ValueCoin,
-		RecipientAddress:       recipientAddr.EncodeAddress(),
-		AuthorRefundAddress: AuthorRefundAddr.EncodeAddress(),
-		SecretHash:             fmt.Sprintf("%x", pushes.SecretHash),
-		LockTime:               pushes.LockTime,
-		LockTimeReachedIn:      lockTimeReachedIn,
-		LockTimeExpired:        lockTimeExpired,
-		atomicSwapDataPushes:   pushes,
+		Asset:                coin.Name,
+		Address:              contractAddr.EncodeAddress(),
+		valueSat:             contractValue,
+		Value:                contractValue.ToBTC(),
+		ValueAsset:           ValueAsset,
+		Unit:                 coin.Unit,
+		RecipientAddress:     recipientAddr.EncodeAddress(),
+		AuthorRefundAddress:  AuthorRefundAddr.EncodeAddress(),
+		SecretHash:           fmt.Sprintf("%x", pushes.SecretHash),
+		LockTime:             pushes.LockTime,
+		LockTimeReachedIn:    lockTimeReachedIn,
+		LockTimeExpired:      lockTimeExpired,
+		atomicSwapDataPushes: pushes,
 	}
-
 	return contract, nil
 }

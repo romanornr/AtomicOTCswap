@@ -80,7 +80,7 @@ func SecretHandler(w http.ResponseWriter, req *http.Request) {
 func AuditHandler(w http.ResponseWriter, req *http.Request) {
 	//params := mux.Vars(req)
 	//coin, contractHex, contractTransaction := params["coin"], params["contractHex"], params["contractTransaction"]
-	contract, err := atomic.AuditContract(req.FormValue("asset"), req.FormValue("contractHex"), req.FormValue("contractTransaction"))
+	contract, err := atomic.AuditContract(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"))
 	if err != nil {
 		fmt.Sprintf("%s\n", err)
 	}
