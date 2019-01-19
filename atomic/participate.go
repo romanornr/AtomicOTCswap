@@ -9,7 +9,6 @@ import (
 	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -86,7 +85,6 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 		return contract, err
 	}
 
-	unit := strings.ToUpper(coin.Symbol)
 	refundTxHash := build.refundTx.TxHash()
 
 	var contractBuf bytes.Buffer
@@ -99,7 +97,7 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 
 	contract = ParticipatedContract{
 		Coin: coin.Name,
-		Unit: unit,
+		Unit: coin.Unit,
 
 		ContractAmount:    amount,
 		ContractFee:       build.contractFee.ToBTC(),

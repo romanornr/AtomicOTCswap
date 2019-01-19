@@ -163,7 +163,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 
 	redemption = Redemption{
 		Coin: coin.Name,
-		Unit: strings.ToUpper(coin.Symbol),
+		Unit: coin.Unit,
 		Fee: fee.ToBTC(),
 		TransactionHash: fmt.Sprintf("%v", &redeemTxHash),
 		TransactionHex: fmt.Sprintf("%x", buf.Bytes()),
