@@ -13,8 +13,10 @@ import (
 
 func createRouter() *mux.Router {
 	r := mux.NewRouter()
+	r.HandleFunc("/audit", AuditSiteHandler).Methods("GET")
 	api := r.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/audit/{coin}/{contractHex}/{contractTransaction}", AuditHandler).Methods("GET")
+	//api.HandleFunc("/audit/{asset}/{contractHex}/{contractTransaction}", AuditHandler).Methods("GET")
+	api.HandleFunc("/audit", AuditHandler).Methods("POST")
 	api.HandleFunc("/initiate", InitiateHandler).Methods("POST")
 	api.HandleFunc("/participate", ParticipateHandler).Methods("POST")
 	api.HandleFunc("/redeem", RedemptionHandler).Methods("POST")
@@ -76,11 +78,18 @@ func SecretHandler(w http.ResponseWriter, req *http.Request) {
 // audit a contract by giving the coin symbol, contract hex and contract transaction
 // from the contract which needs to be audited
 func AuditHandler(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-	coin, contractHex, contractTransaction := params["coin"], params["contractHex"], params["contractTransaction"]
-	contract, err := atomic.AuditContract(coin, contractHex, contractTransaction)
+	//params := mux.Vars(req)
+	//coin, contractHex, contractTransaction := params["coin"], params["contractHex"], params["contractTransaction"]
+	contract, err := atomic.AuditContract(req.FormValue("asset"), req.FormValue("contractHex"), req.FormValue("contractTransaction"))
 	if err != nil {
 		fmt.Sprintf("%s\n", err)
 	}
 	json.NewEncoder(w).Encode(&contract)
+}
+
+func AuditSiteHandler(w http.ResponseWriter, req *http.Request) {
+	err :=  tpl.ExecuteTemplate(w, "audit.gohtml", nil)
+	if err != nil {
+		fmt.Println("error template")
+	}
 }

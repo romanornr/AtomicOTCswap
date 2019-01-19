@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head"}}
+<body>
+{{template "menu"}}
+
+
+<div class="container">
+    <form action="/api/audit" method="post">
+
+        <div class="form-row">
+        <div class="form-group col-md-4">
+            <label for="inputState">Asset</label>
+            <select id="inputState" class="form-control">
+                <option selected>BTC</option>
+                <option>VIA</option>
+                <option>LTC</option>
+            </select>
+        </div>
+        </div>
+
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="contractHex">Contract Hex</label>
+                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="">
+            </div>
+            <div class="form-group">
+                <label for="contractTransaction">Contract Transaction</label>
+                <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Audit</button>
+    </form>
+</div>
+
+</body>
+</html>

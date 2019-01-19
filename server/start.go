@@ -2,9 +2,16 @@ package server
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 )
+
+var tpl *template.Template
+
+func init() {
+	tpl = template.Must(template.ParseGlob("website/*"))
+}
 
 func Start() {
 
