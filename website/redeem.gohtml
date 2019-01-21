@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head"}}
+<body>
+{{template "menu"}}
+
+
+<div class="container">
+    <form action="/api/redeem" method="post">
+
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="coin">Asset</label>
+                <select name="coin" id="coin" class="form-control" required>
+                    <option disabled selected value> -- select an option -- </option>
+                    <option value="btc">Bitcoin</option>
+                    <option value="via">Viacoin</option>
+                    <option value="ltc">Litecoin</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="contractHex">Your WIF</label>
+                <input type="text" class="form-control" id="wif" name="wif" placeholder="" autocomplete="on" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="contractHex">Secret</label>
+                <input type="text" class="form-control" id="secret" name="secret" placeholder="" autocomplete="on" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="contractHex">Contract Hex</label>
+                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="" autocomplete="on" required>
+            </div>
+            <div class="form-group">
+                <label for="contractTransaction">Contract Transaction</label>
+                <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="" autocomplete="on" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Redeem</button>
+    </form>
+</div>
+
+</body>
+</html>

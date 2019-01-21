@@ -16,6 +16,7 @@ func createRouter() *mux.Router {
 	r.HandleFunc("/initiate", InitiateSiteHandler).Methods("GET")
 	r.HandleFunc("/audit", AuditSiteHandler).Methods("GET")
 	r.HandleFunc("/participate", participateSiteHandler).Methods("GET")
+	r.HandleFunc("/redeem", RedemptionSiteHandler).Methods("GET")
 
 	api := r.PathPrefix("/api").Subrouter()
 	//api.HandleFunc("/audit/{asset}/{contractHex}/{contractTransaction}", AuditHandler).Methods("GET")
@@ -74,9 +75,16 @@ func ParticipateHandler(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(contract)
 }
 
+func RedemptionSiteHandler(w http.ResponseWriter, r *http.Request) {
+	err := tpl.ExecuteTemplate(w, "redeem.gohtml", nil)
+	if err != nil {
+		fmt.Println("error template")
+	}
+}
+
 func RedemptionHandler(w http.ResponseWriter, req *http.Request) {
 
-	redemption, err := atomic.Redeem(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"), req.FormValue("secretHex"), req.FormValue("wif"))
+	redemption, err := atomic.Redeem(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"), req.FormValue("secret"), req.FormValue("wif"))
 	if err != nil {
 		log.Printf("error redemption: %s\n", err)
 	}

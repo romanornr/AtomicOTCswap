@@ -80,9 +80,6 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 		return redemption, err
 	}
 
-	//recipientAddr, err := btcutil.DecodeAddress("VnRi5kfigWPgDAz62mY4oLKRruErZwTZJB", coin.Network.ChainCgfMainNetParams())
-
-	//recipientAddr, err := GenerateNewPublicKey(*wif, coin)
 	contractHash := btcutil.Hash160(cmd.contract)
 	contractOut := -1
 	for i, out := range cmd.contractTx.TxOut {
@@ -98,7 +95,12 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 		return redemption, errors.New("transaction does not contain a contract output")
 	}
 
-	outScript, err := txscript.PayToAddrScript(recipientAddr)
+	addr, err := getRawChangeAddress(wif, coin)
+	if err != nil {
+		return redemption, fmt.Errorf("getrawchangeaddress: %v", err)
+	}
+
+	outScript, err := txscript.PayToAddrScript(addr)
 	if err != nil {
 		return redemption, err
 	}
@@ -125,11 +127,10 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 		return redemption, fmt.Errorf("redeem output value of %v %s is dust", btcutil.Amount(redeemTx.TxOut[0].Value).ToBTC(), strings.ToUpper(coin.Symbol))
 	}
 
-	redeemSig, redeemPubKey, _ := createRedeemSig(redeemTx, 0, cmd.contract, recipientAddr, wif, coin)
-	//if err != nil {
-	//	return redemption, err
-	//}
-
+	redeemSig, redeemPubKey, err := createRedeemSig(redeemTx, 0, cmd.contract, recipientAddr, wif)
+	if err != nil {
+		return redemption, err
+	}
 
 	redeemScriptSig, err := redeemP2SHContract(cmd.contract, redeemSig, redeemPubKey, cmd.secret)
 	if err != nil {
@@ -144,7 +145,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 	buf.Grow(redeemTx.SerializeSize())
 	redeemTx.Serialize(&buf)
 
-	fmt.Printf("Redeem fee: %v %s\n\n", fee, coin.Symbol)
+	fmt.Printf("Redeem fee: %v %s\n\n", fee.ToBTC(), coin.Unit)
 	fmt.Printf("Redeem transaction (%v):\n", &redeemTxHash)
 	fmt.Printf("%x\n\n", buf.Bytes())
 
@@ -173,18 +174,12 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 	return redemption, nil
 }
 
-func createRedeemSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF, coin *bcoins.Coin) (sig, pubkey []byte, err error) {
-	//sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
-	//fmt.Println(addr.EncodeAddress())
-	//fmt.Println(sourceAddress.EncodeAddress())
-	//if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
-	//	return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
-	//}
+func createRedeemSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF) (sig, pubkey []byte, err error) {
 	sig, err = txscript.RawTxInSignature(tx, idx, pkScript, txscript.SigHashAll, wif.PrivKey)
 	if err != nil {
 		return nil, nil, err
 	}
-	return sig, addr.ScriptAddress(), nil
+	return sig, wif.PrivKey.PubKey().SerializeCompressed(), nil
 }
 
 
