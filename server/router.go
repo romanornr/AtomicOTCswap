@@ -15,6 +15,7 @@ func createRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/initiate", InitiateSiteHandler).Methods("GET")
 	r.HandleFunc("/audit", AuditSiteHandler).Methods("GET")
+	r.HandleFunc("/participate", participateSiteHandler).Methods("GET")
 
 	api := r.PathPrefix("/api").Subrouter()
 	//api.HandleFunc("/audit/{asset}/{contractHex}/{contractTransaction}", AuditHandler).Methods("GET")
@@ -49,6 +50,13 @@ func InitiateHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(contract)
+}
+
+func participateSiteHandler(w http.ResponseWriter, r *http.Request) {
+	err := tpl.ExecuteTemplate(w, "participate.gohtml", nil)
+	if err != nil {
+		fmt.Println("error template")
+	}
 }
 
 func ParticipateHandler(w http.ResponseWriter, req *http.Request) {

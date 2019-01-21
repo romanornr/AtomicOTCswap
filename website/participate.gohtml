@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head"}}
+<body>
+{{template "menu"}}
+
+
+<div class="container">
+    <form action="/api/participate" method="post">
+
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="coin">Asset</label>
+                <select name="coin" id="coin" class="form-control" required>
+                    <option disabled selected value> -- select an option -- </option>
+                    <option value="btc">Bitcoin</option>
+                    <option value="via">Viacoin</option>
+                    <option value="ltc">Litecoin</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="contractHex">Your WIF</label>
+                <input type="text" class="form-control" id="wif" name="wif" placeholder="" autocomplete="off" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="contractHex">Secret</label>
+                <input type="text" class="form-control" id="secret" name="secret" placeholder="" autocomplete="off" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+
+            <div class="form-group">
+                <label for="amount">Amount</label>
+                <input type="number" class="form-control" id="contractTransaction" name="amount" placeholder="" autocomplete="off" step="0.00000001" required>
+            </div>
+
+            <div class="form-group col-md-6">
+                <label for="contractHex">Counter Party Address</label>
+                <input type="text" class="form-control" id="counterPartyAddr" name="counterPartyAddr" placeholder="" autocomplete="off" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Participate contract</button>
+    </form>
+</div>
+
+</body>
+</html>
