@@ -72,7 +72,7 @@ func Participate(coinTicker string, participantAddr string, WIFstring string, am
 
 func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) (contract ParticipatedContract, err error) {
 
-	locktime := time.Now().Add(1 * time.Hour).Unix()
+	locktime := time.Now().Add(2 * time.Hour).Unix()
 
 	build, err := buildContract(&contractArgs{
 		coin1:      coin,

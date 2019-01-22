@@ -100,6 +100,8 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 		return redemption, fmt.Errorf("getrawchangeaddress: %v", err)
 	}
 
+	fmt.Println(addr)
+
 	outScript, err := txscript.PayToAddrScript(addr)
 	if err != nil {
 		return redemption, err
@@ -119,7 +121,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 	redeemTx := wire.NewMsgTx(coin.TxVersion)
 	redeemTx.LockTime = uint32(pushes.LockTime)
 	redeemTx.AddTxIn(wire.NewTxIn(&contractOutPoint, nil, nil))
-	redeemTx.AddTxOut(wire.NewTxOut(0, outScript))
+	redeemTx.AddTxOut(wire.NewTxOut(0, outScript)) // amount set below
 	redeemSize := estimateRedeemSerializeSize(cmd.contract, redeemTx.TxOut)
 	fee := txrules.FeeForSerializeSize(feePerKb, redeemSize)
 	redeemTx.TxOut[0].Value = cmd.contractTx.TxOut[contractOut].Value - int64(fee)
@@ -127,7 +129,7 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 		return redemption, fmt.Errorf("redeem output value of %v %s is dust", btcutil.Amount(redeemTx.TxOut[0].Value).ToBTC(), strings.ToUpper(coin.Symbol))
 	}
 
-	redeemSig, redeemPubKey, err := createRedeemSig(redeemTx, 0, cmd.contract, recipientAddr, wif)
+	redeemSig, redeemPubKey, err := createSig(redeemTx, 0, cmd.contract, recipientAddr, wif, coin)
 	if err != nil {
 		return redemption, err
 	}
