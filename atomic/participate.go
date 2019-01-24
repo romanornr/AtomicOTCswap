@@ -75,7 +75,7 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 	locktime := time.Now().Add(1 * time.Hour).Unix()
 
 	build, err := buildContract(&contractArgs{
-		coin1:      coin,
+		coin:      coin,
 		them:       cmd.counterParty1Addr,
 		amount:     cmd.amount,
 		locktime:   locktime,

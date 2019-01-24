@@ -27,8 +27,7 @@ type Command struct {
 }
 
 type contractArgs struct {
-	coin1      *bcoins.Coin
-	coin2      *bcoins.Coin
+	coin      *bcoins.Coin
 	them       *btcutil.AddressPubKeyHash
 	amount     btcutil.Amount
 	locktime   int64
@@ -49,8 +48,8 @@ type builtContract struct {
 
 func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error) {
 
-	refundAddress, _ := GenerateNewPublicKey(*wif, args.coin1)
-	refundAddr, _ := btcutil.DecodeAddress(refundAddress.EncodeAddress(), args.coin1.Network.ChainCgfMainNetParams())
+	refundAddress, _ := GenerateNewPublicKey(*wif, args.coin)
+	refundAddr, _ := btcutil.DecodeAddress(refundAddress.EncodeAddress(), args.coin.Network.ChainCgfMainNetParams())
 
 	refundAddrHash, ok := refundAddr.(interface {
 		Hash160() *[ripemd160.Size]byte
@@ -63,7 +62,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 	if err != nil {
 		return nil, err
 	}
-	contractP2SH, err := btcutil.NewAddressScriptHash(contract, args.coin1.Network.ChainCgfMainNetParams())
+	contractP2SH, err := btcutil.NewAddressScriptHash(contract, args.coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +79,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 	unsignedContract := wire.NewMsgTx(txVersion)
 	unsignedContract.AddTxOut(wire.NewTxOut(int64(args.amount), contractP2SHPkScript))
 
-	contractTx, contractFee, complete, err := fundAndSignRawTransaction(unsignedContract, wif, args.amount, args.coin1)
+	contractTx, contractFee, complete, err := fundAndSignRawTransaction(unsignedContract, wif, args.amount, args.coin)
 	if err != nil {
 		return nil, fmt.Errorf("signrawtransaction: %v", err)
 	}
@@ -90,7 +89,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 
 	contractTxHash := contractTx.TxHash()
 
-	refundTx, refundFee, err := buildRefund(contract, contractTx, feePerKb, minFeePerKb, wif, args.coin1)
+	refundTx, refundFee, err := buildRefund(contract, contractTx, feePerKb, minFeePerKb, wif, args.coin)
 	if err != nil {
 		return nil, err
 	}
