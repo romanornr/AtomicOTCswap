@@ -15,7 +15,7 @@ func init() {
 
 func Start() {
 
-	host := "127.0.0.1:8080"
+	host := "127.0.0.1:8000"
 	fmt.Printf("HTTP server started at %s\n", host)
 
 	router := createRouter()

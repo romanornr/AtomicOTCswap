@@ -18,6 +18,7 @@ type Response struct {
 
 func createRouter() *mux.Router {
 	r := mux.NewRouter()
+	r.HandleFunc("/", HomeHandler).Methods("GET")
 	r.HandleFunc("/initiate", InitiateSiteHandler).Methods("GET")
 	r.HandleFunc("/audit", AuditSiteHandler).Methods("GET")
 	r.HandleFunc("/participate", participateSiteHandler).Methods("GET")
@@ -31,6 +32,13 @@ func createRouter() *mux.Router {
 	api.HandleFunc("/extractsecret", SecretHandler).Methods("POST")
 	http.Handle("/", r)
 	return r
+}
+
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	err := tpl.ExecuteTemplate(w, "index.gohtml", nil)
+	if err != nil {
+		fmt.Println("error template")
+	}
 }
 
 func InitiateSiteHandler(w http.ResponseWriter, r *http.Request) {
