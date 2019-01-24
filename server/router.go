@@ -10,6 +10,11 @@ import (
 	"strconv"
 )
 
+type Response struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"result"`
+	Error   string      `json:"error"`
+}
 
 func createRouter() *mux.Router {
 	r := mux.NewRouter()
@@ -30,7 +35,7 @@ func createRouter() *mux.Router {
 }
 
 func InitiateSiteHandler(w http.ResponseWriter, r *http.Request) {
-	err :=  tpl.ExecuteTemplate(w, "initiate.gohtml", nil)
+	err := tpl.ExecuteTemplate(w, "initiate.gohtml", nil)
 	if err != nil {
 		fmt.Println("error template")
 	}
@@ -100,19 +105,28 @@ func SecretHandler(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(secret)
 }
 
+func AuditSiteHandler(w http.ResponseWriter, req *http.Request) {
+	err := tpl.ExecuteTemplate(w, "audit.gohtml", nil)
+	if err != nil {
+		fmt.Println("error template")
+	}
+}
+
 // audit a contract by giving the coin symbol, contract hex and contract transaction
 // from the contract which needs to be audited
 func AuditHandler(w http.ResponseWriter, req *http.Request) {
 	contract, err := atomic.AuditContract(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"))
-	if err != nil {
-		fmt.Sprintf("%s\n", err)
-	}
-	json.NewEncoder(w).Encode(&contract)
+	respond(w, contract, err)
 }
 
-func AuditSiteHandler(w http.ResponseWriter, req *http.Request) {
-	err :=  tpl.ExecuteTemplate(w, "audit.gohtml", nil)
+func respond(w http.ResponseWriter, data interface{}, err error) {
+	response := Response{Data: data, Success: true}
 	if err != nil {
-		fmt.Println("error template")
+		response.Data = nil
+		response.Success = false
+		response.Error = err.Error()
 	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+	return
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viacoin/viad/chaincfg"
 	"github.com/viacoin/viad/wire"
+	"strings"
 )
 
 type Coin struct {
@@ -46,8 +47,9 @@ var coins = map[string]Coin{
 }
 
 // select a coin by symbol and return Coin struct and error
+// coin symbol to lower case
 func SelectCoin(symbol string) (Coin, error) {
-	if coins, ok := coins[symbol]; ok {
+	if coins, ok := coins[strings.ToLower(symbol)]; ok {
 		return coins, nil
 	}
 	return Coin{}, fmt.Errorf("altcoin %s not found\n", symbol)

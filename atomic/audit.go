@@ -35,7 +35,6 @@ type AuditedContract struct {
 }
 
 func AuditContract(coinTicker string, contractHex string, contractTransaction string) (AuditedContract, error) {
-	fmt.Println(coinTicker)
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
 		return AuditedContract{}, err
@@ -43,17 +42,17 @@ func AuditContract(coinTicker string, contractHex string, contractTransaction st
 
 	contract, err := hex.DecodeString(contractHex)
 	if err != nil {
-		return AuditedContract{}, fmt.Errorf("failed to decode contract: %v\n", err)
+		return AuditedContract{}, fmt.Errorf("failed to decode contract: %v", err)
 	}
 
 	contractTxBytes, err := hex.DecodeString(contractTransaction)
 	if err != nil {
-		return AuditedContract{}, fmt.Errorf("failed to decode transaction:%v\n", err)
+		return AuditedContract{}, fmt.Errorf("failed to decode transaction:%v", err)
 	}
 	var contractTx wire.MsgTx
 	err = contractTx.Deserialize(bytes.NewReader(contractTxBytes))
 	if err != nil {
-		return AuditedContract{}, fmt.Errorf("failed to decode transaction: %v\n", err)
+		return AuditedContract{}, fmt.Errorf("failed to decode transaction: %v", err)
 	}
 
 	c := AuditContractCmd{contract: contract, contractTx: &contractTx}
@@ -85,7 +84,7 @@ func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error)
 		return AuditedContract{}, errors.New("contract is not an atomic swap script recognized by this tool")
 	}
 	if pushes.SecretSize != secretSize {
-		return AuditedContract{}, fmt.Errorf("contract specifies strange range secret size: %v\n", pushes.SecretSize)
+		return AuditedContract{}, fmt.Errorf("contract specifies strange range secret size: %v", pushes.SecretSize)
 	}
 
 	contractAddr, err := btcutil.NewAddressScriptHash(cmd.contract, coin.Network.ChainCgfMainNetParams())
@@ -118,9 +117,9 @@ func (cmd *AuditContractCmd) runAudit(coin bcoins.Coin) (AuditedContract, error)
 			fmt.Printf("Locktime reached in %v\n", reachedAt)
 		} else {
 			lockTimeExpired = true
-			fmt.Printf("Contract refund time lock has expired !\n")
+			fmt.Printf("Contract refund time lock has expired !")
 		}
-		fmt.Printf("Locktime: block %v\n", pushes.LockTime)
+		fmt.Printf("Locktime: block %v", pushes.LockTime)
 	}
 
 	contract := AuditedContract{
