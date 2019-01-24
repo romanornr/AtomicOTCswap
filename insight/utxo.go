@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
+	"github.com/romanornr/AtomicOTCswap/insightjson"
+	"github.com/viacoin/viad/chaincfg/chainhash"
 	"log"
 	"net/http"
 	"sort"
 	"time"
-
-	"github.com/romanornr/CryptoTwitterTipBot/insightjson"
-	"github.com/viacoin/viad/chaincfg/chainhash"
 )
 
 type UTXO struct {

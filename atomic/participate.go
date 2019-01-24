@@ -32,7 +32,7 @@ type ParticipatedContract struct {
 	RefundTransaction      string  `json:"refund_transaction"`
 }
 
-func Participate(coinTicker string, participantAddr string, WIFstring string, amount float64, secret string) (contract ParticipatedContract, err error) {
+func Participate(coinTicker string, participantAddr string, WIFstring string, amount float64, secretHash string) (contract ParticipatedContract, err error) {
 
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
@@ -61,18 +61,18 @@ func Participate(coinTicker string, participantAddr string, WIFstring string, am
 		return contract, err
 	}
 
-	secretHash, err := hex.DecodeString(secret)
+	secret, err := hex.DecodeString(secretHash)
 	if err != nil {
 		return contract, errors.New("secret hash must be hex encoded")
 	}
 
-	cmd := &participateCmd{counterParty1Addr: counterParty1AddrP2KH, amount: amount2, secretHash: secretHash}
+	cmd := &participateCmd{counterParty1Addr: counterParty1AddrP2KH, amount: amount2, secretHash: secret}
 	return cmd.runCommand(wif, &coin, amount)
 }
 
 func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount float64) (contract ParticipatedContract, err error) {
 
-	locktime := time.Now().Add(2 * time.Hour).Unix()
+	locktime := time.Now().Add(1 * time.Hour).Unix()
 
 	build, err := buildContract(&contractArgs{
 		coin1:      coin,

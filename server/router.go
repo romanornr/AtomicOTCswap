@@ -103,8 +103,6 @@ func SecretHandler(w http.ResponseWriter, req *http.Request) {
 // audit a contract by giving the coin symbol, contract hex and contract transaction
 // from the contract which needs to be audited
 func AuditHandler(w http.ResponseWriter, req *http.Request) {
-	//params := mux.Vars(req)
-	//coin, contractHex, contractTransaction := params["coin"], params["contractHex"], params["contractTransaction"]
 	contract, err := atomic.AuditContract(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"))
 	if err != nil {
 		fmt.Sprintf("%s\n", err)
