@@ -22,13 +22,13 @@ type ExtractedSecret struct {
 func ExtractSecret(redemptionTransaction string, secretHash string) (extractedSecret ExtractedSecret, err error) {
 	redemptionTxBytes, err := hex.DecodeString(redemptionTransaction)
 	if err != nil {
-		return extractedSecret, fmt.Errorf("failed to decode redemption transaction: %v\n", err)
+		return extractedSecret, fmt.Errorf("failed to decode redemption transaction: %v", err)
 	}
 
 	var redemptionTx wire.MsgTx
 	err = redemptionTx.Deserialize(bytes.NewReader(redemptionTxBytes))
 	if err != nil {
-		return extractedSecret, fmt.Errorf("failed to decode redemptioon transaction: %v\n", err)
+		return extractedSecret, fmt.Errorf("failed to decode redemptioon transaction: %v", err)
 	}
 
 	secret, err := hex.DecodeString(secretHash)

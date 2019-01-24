@@ -8,7 +8,6 @@ import (
 	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/viacoin/viad/chaincfg"
 	btcutil "github.com/viacoin/viautil"
-	"log"
 	"time"
 )
 
@@ -33,33 +32,33 @@ type InitiatedContract struct {
 	SecretHash             string  `json:"secret_hash"`
 }
 
-func Initiate(coinTicker string, participantAddr string, amount float64, WIFstring string) (InitiatedContract, error) {
+func Initiate(coinTicker string, participantAddr string, amount float64, WIFstring string) (contract InitiatedContract, err error) {
 
 	coin, err := bcoins.SelectCoin(coinTicker)
 	if err != nil {
-		return InitiatedContract{}, err
+		return contract, err
 	}
 
 	chaincfg.Register(coin.Network.ChainCgfMainNetParams())
 
 	wif, err := btcutil.DecodeWIF(WIFstring)
 	if err != nil {
-		log.Printf("error decoding private key in wif format: %s\n", err)
+		return contract, fmt.Errorf("error decoding private key in wif format: %s", err)
 	}
 
 	counterParty2Addr, err := btcutil.DecodeAddress(participantAddr, coin.Network.ChainCgfMainNetParams())
 	if err != nil {
-		return InitiatedContract{}, fmt.Errorf("failed to decode the address from the participant: %s\n", err)
+		return contract, fmt.Errorf("failed to decode the address from the participant: %s", err)
 	}
 
 	counterParty2AddrP2KH, ok := counterParty2Addr.(*btcutil.AddressPubKeyHash)
 	if !ok {
-		return InitiatedContract{}, errors.New("participant address is not P2KH")
+		return contract, errors.New("participant address is not P2KH")
 	}
 
 	amount2, err := btcutil.NewAmount(amount)
 	if err != nil {
-		return InitiatedContract{}, err
+		return contract, err
 	}
 
 	cmd := &initiateCmd{counterParty2Addr: counterParty2AddrP2KH, amount: amount2}
