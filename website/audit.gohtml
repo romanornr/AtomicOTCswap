@@ -6,7 +6,7 @@
 
 
 <div class="container">
-    <form action="/api/audit" method="post">
+    <form id="audit-form" @submit.prevent="processForm">
 
         <div class="form-row">
         <div class="form-group col-md-4">
@@ -33,6 +33,32 @@
         <button type="submit" class="btn btn-primary">Audit</button>
     </form>
 </div>
+
+<script>
+    const app = new Vue({
+        el: '#audit-form',
+        data () {
+            return {
+                audit: []
+            }
+        },
+        methods: {
+            processForm: function () {
+                axios.post('http://127.0.0.1:8000/api/audit', {
+                    coin: "via",
+                    contractHex: "6382012088a820b9c1d630a5de7f1fc9d8ce868f5418e81bdf467296654480156505800f90f1828876a914c4ecdb11e3985a96e001079629ffe1d94150379467041dc8495cb17576a9148e4d174eb2236d8ab0c5bb250df08a5af054d3206888ac",
+                    contactTransaction: "02000000012c1f6c9a3aa221d7552ce6c5a8353c4bc00f88e826428080020b4a7c7b3468ba000000006a47304402200e5ff7fb37cb0499b21b17a71206b411b5b1668e36f6c48783cac5110ccbab0202207403f6d29580849bdc8d5d167e89694bf41ac6d1fbde81af35b866d733f6cb5c012102a7b08bb2a3609223a185761231d815e287ec13b74ccff3feb274253f7737356affffffff0180ce341d0000000017a914957e1287bcd0d620d3c7c496be6106cb37e4165b8700000000"
+                }).then((response) => {
+                    console.log(response.data)
+                    this.audit = response.data
+                })
+                    .catch((e) => {
+                        console.log(e)
+                    })
+            }
+        }
+    });
+</script>
 
 </body>
 </html>

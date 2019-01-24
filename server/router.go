@@ -104,6 +104,7 @@ func AuditSiteHandler(w http.ResponseWriter, req *http.Request) {
 // audit a contract by giving the coin symbol, contract hex and contract transaction
 // from the contract which needs to be audited
 func AuditHandler(w http.ResponseWriter, req *http.Request) {
+	//fmt.Println(req.FormValue("coin"))
 	contract, err := atomic.AuditContract(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"))
 	respond(w, contract, err)
 }
@@ -115,6 +116,7 @@ func respond(w http.ResponseWriter, data interface{}, err error) {
 		response.Success = false
 		response.Error = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
+		fmt.Println(err)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
