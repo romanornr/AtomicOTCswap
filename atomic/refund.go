@@ -115,7 +115,7 @@ func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb 
 		return nil, 0, err
 	}
 
-	refundTx = wire.NewMsgTx(txVersion) // TODO refactor: This can be different per coin. Viacoin is 2 but Zcoin is 1
+	refundTx = wire.NewMsgTx(coin.TxVersion)
 	refundTx.LockTime = uint32(pushes.LockTime)
 	refundTx.AddTxOut(wire.NewTxOut(0, refundOutScript)) // amount set below
 	refundSize := estimateRefundSerializeSize(contract, refundTx.TxOut)

@@ -108,6 +108,9 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.Amount, coin *bcoins.Coin) (*wire.MsgTx, btcutil.Amount, bool, error) {
 	sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
 	sourcePKScript, err := txscript.PayToAddrScript(sourceAddress.AddressPubKeyHash())
+	if err != nil {
+		return tx, amount, false, err
+	}
 
 	unspentOutputs := insight.GetUnspentOutputs(sourceAddress.AddressPubKeyHash().String(), coin)
 	sourceUTXOs := insight.GetMinimalRequiredUTXO(int64(amount), unspentOutputs)
@@ -126,30 +129,39 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		tx.TxIn[idx].SignatureScript = sigScript
 	}
 
-	change := availableAmountToSpend - int64(amount)
 
-	changeAddress := sourceAddress
-	changeSendToScript, err := txscript.PayToAddrScript(changeAddress)
-	if err != nil {
-		return &wire.MsgTx{}, 0, false, fmt.Errorf("change address wrong\n")
+	change := availableAmountToSpend - int64(amount)
+	var fee btcutil.Amount
+
+	if change < 0 {
+		return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to spend, Available amount %f %s", btcutil.Amount(availableAmountToSpend).ToBTC(), coin.Unit)
 	}
 
-	changeOutput := wire.NewTxOut(change, changeSendToScript)
-	changeOutput.SerializeSize()
+	if change >= 0 {
+		changeAddress := sourceAddress
+		changeSendToScript, err := txscript.PayToAddrScript(changeAddress)
+		if err != nil {
+			return &wire.MsgTx{}, 0, false, fmt.Errorf("change address wrong\n")
+		}
 
-	fee := feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize(), coin)
-	//calculate fees in and reassign changeOutput so the fees are calculated in
-	change -= int64(fee)
-	fmt.Println(change)
-	changeOutput = wire.NewTxOut(change, changeSendToScript)
-	//tx.AddTxOut(changeOutput)
+		// calculate fees in
+		changeOutput := wire.NewTxOut(change, changeSendToScript)
+		fee = feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize(), coin)
+		change -= int64(fee)
+		if change < 0 {
+			return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try an amount of %f %s", fee.ToBTC(), coin.Unit, (amount-fee).ToBTC(), coin.Unit)
+		}
+		// reassign change output
+		changeOutput = wire.NewTxOut(change, changeSendToScript)
+		tx.AddTxOut(changeOutput)
+	}
 
 	signedTx := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
 	if err := tx.Serialize(signedTx); err != nil {
-		return &wire.MsgTx{}, 0, false, fmt.Errorf("Failed to sign tx")
+		return &wire.MsgTx{}, 0, false, fmt.Errorf("failed to sign tx")
 	}
 
-	return tx, fee, true, nil
+	return tx, fee, true, nil // TODO comment tx.AddTxOut(changeOutput) when issues with creating swap or refund
 }
 
 //// TODO maybe fee per byte to 279
@@ -160,7 +172,7 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 //}
 
 func feeEstimationBySize(size int, coin *bcoins.Coin) (amount btcutil.Amount) {
-	feePerByte := coin.FeePerByte // TODO change for alts
+	feePerByte := coin.FeePerByte
 	return btcutil.Amount(feePerByte * size)
 }
 
