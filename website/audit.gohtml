@@ -11,7 +11,7 @@
         <div class="form-row">
         <div class="form-group col-md-4">
             <label for="coin">Asset</label>
-            <select name="coin" id="coin" class="form-control" required>
+            <select name="coin" id="coin" class="form-control" v-model="coin" required>
                 <option disabled selected value> -- select an option -- </option>
                 <option value="btc">Bitcoin</option>
                 <option value="via">Viacoin</option>
@@ -23,35 +23,53 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="contractHex">Contract Hex</label>
-                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="" autocomplete="off" required>
+                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="" autocomplete="off" v-model="contractHex" required>
             </div>
             <div class="form-group">
                 <label for="contractTransaction">Contract Transaction</label>
-                <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="" autocomplete="off" required>
+                <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="" autocomplete="off" v-model="contractTransaction" required>
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Audit</button>
     </form>
 </div>
 
+<div id="output" class="container"></div>
+
+<div id="response">
+    <pre></pre>
+</div>
+
 <script>
     const app = new Vue({
         el: '#audit-form',
-        data () {
+        data() {
             return {
-                audit: []
-            }
+                form: {
+                    coin: 'via',
+                    contractHex: '6382012088a820b9c1d630a5de7f1fc9d8ce868f5418e81bdf467296654480156505800f90f1828876a914c4ecdb11e3985a96e001079629ffe1d94150379467041dc8495cb17576a9148e4d174eb2236d8ab0c5bb250df08a5af054d3206888ac',
+                    contractTransaction: '02000000012c1f6c9a3aa221d7552ce6c5a8353c4bc00f88e826428080020b4a7c7b3468ba000000006a47304402200e5ff7fb37cb0499b21b17a71206b411b5b1668e36f6c48783cac5110ccbab0202207403f6d29580849bdc8d5d167e89694bf41ac6d1fbde81af35b866d733f6cb5c012102a7b08bb2a3609223a185761231d815e287ec13b74ccff3feb274253f7737356affffffff0180ce341d0000000017a914957e1287bcd0d620d3c7c496be6106cb37e4165b8700000000'
+                }
+            };
         },
         methods: {
             processForm: function () {
-                axios.post('http://127.0.0.1:8000/api/audit', {
-                    coin: "via",
-                    contractHex: "6382012088a820b9c1d630a5de7f1fc9d8ce868f5418e81bdf467296654480156505800f90f1828876a914c4ecdb11e3985a96e001079629ffe1d94150379467041dc8495cb17576a9148e4d174eb2236d8ab0c5bb250df08a5af054d3206888ac",
-                    contactTransaction: "02000000012c1f6c9a3aa221d7552ce6c5a8353c4bc00f88e826428080020b4a7c7b3468ba000000006a47304402200e5ff7fb37cb0499b21b17a71206b411b5b1668e36f6c48783cac5110ccbab0202207403f6d29580849bdc8d5d167e89694bf41ac6d1fbde81af35b866d733f6cb5c012102a7b08bb2a3609223a185761231d815e287ec13b74ccff3feb274253f7737356affffffff0180ce341d0000000017a914957e1287bcd0d620d3c7c496be6106cb37e4165b8700000000"
+                axios({
+                    method: 'POST',
+                    url: 'http://127.0.0.1:8000/api/audit',
+                    data: JSON.stringify(this.form), // {
+                     //   coin: 'via',
+                    //    contractHex: "6382012088a820b9c1d630a5de7f1fc9d8ce868f5418e81bdf467296654480156505800f90f1828876a914c4ecdb11e3985a96e001079629ffe1d94150379467041dc8495cb17576a9148e4d174eb2236d8ab0c5bb250df08a5af054d3206888ac",
+                     //   contactTransaction: "02000000012c1f6c9a3aa221d7552ce6c5a8353c4bc00f88e826428080020b4a7c7b3468ba000000006a47304402200e5ff7fb37cb0499b21b17a71206b411b5b1668e36f6c48783cac5110ccbab0202207403f6d29580849bdc8d5d167e89694bf41ac6d1fbde81af35b866d733f6cb5c012102a7b08bb2a3609223a185761231d815e287ec13b74ccff3feb274253f7737356affffffff0180ce341d0000000017a914957e1287bcd0d620d3c7c496be6106cb37e4165b8700000000",
+                  //  },
+                   // config: {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                   // }
                 }).then((response) => {
-                    console.log(response.data)
-                    this.audit = response.data
-                })
+                //     console.log(response.data)
+                 })
                     .catch((e) => {
                         console.log(e)
                     })
@@ -59,6 +77,32 @@
         }
     });
 </script>
+
+
+{{/*<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>*/}}
+{{/*<script>*/}}
+    {{/*(function($){*/}}
+        {{/*function processForm( e ){*/}}
+            {{/*$.ajax({*/}}
+                {{/*url: 'http://127.0.0.1:8000/api/audit',*/}}
+                {{/*dataType: 'text',*/}}
+                {{/*type: 'post',*/}}
+                {{/*contentType: 'application/x-www-form-urlencoded',*/}}
+                {{/*data: $(this).serialize(),*/}}
+                {{/*success: function( data, textStatus, jQxhr ){*/}}
+                    {{/*$('#response pre').html( data );*/}}
+                {{/*},*/}}
+                {{/*error: function( jqXhr, textStatus, errorThrown ){*/}}
+                    {{/*console.log( errorThrown );*/}}
+                {{/*}*/}}
+            {{/*});*/}}
+
+            {{/*e.preventDefault();*/}}
+        {{/*}*/}}
+
+        {{/*$('#audit-form').submit( processForm );*/}}
+    {{/*})(jQuery);*/}}
+{{/*</script>*/}}
 
 </body>
 </html>

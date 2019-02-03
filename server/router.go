@@ -31,6 +31,7 @@ func createRouter() *mux.Router {
 	api.HandleFunc("/redeem", RedemptionHandler).Methods("POST")
 	api.HandleFunc("/extractsecret", SecretHandler).Methods("POST")
 	http.Handle("/", r)
+
 	return r
 }
 
@@ -101,10 +102,23 @@ func AuditSiteHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+//type UserInput struct {
+//	Coin                string `json:"coin"`
+//	ContractHex         string `json:"contractHex"`
+//	ContractTransaction string `json:"contractTransaction"`
+//}
+
 // audit a contract by giving the coin symbol, contract hex and contract transaction
 // from the contract which needs to be audited
 func AuditHandler(w http.ResponseWriter, req *http.Request) {
-	//fmt.Println(req.FormValue("coin"))
+	fmt.Printf("coin: %s  <-- \n", req.FormValue("coin"))
+	form := req.Form
+
+
+	for f := range form {
+		fmt.Println(f)
+	}
+
 	contract, err := atomic.AuditContract(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"))
 	respond(w, contract, err)
 }
