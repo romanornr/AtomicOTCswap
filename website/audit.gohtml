@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 {{template "head"}}
 <body>
 {{template "menu"}}
 
 
-<div class="container">
+<div class="container" >
     <form id="audit-form" @submit.prevent="processForm">
 
         <div class="form-row">
         <div class="form-group col-md-4">
             <label for="coin">Asset</label>
-            <select name="coin" id="coin" class="form-control" v-model="coin" required>
+            <select name="coin" id="coin" class="form-control" v-model="form.coin" required>
                 <option disabled selected value> -- select an option -- </option>
                 <option value="btc">Bitcoin</option>
                 <option value="via">Viacoin</option>
@@ -23,59 +23,74 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="contractHex">Contract Hex</label>
-                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="" autocomplete="off" v-model="contractHex" required>
+                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="" autocomplete="off" v-model="form.contractHex" required>
             </div>
             <div class="form-group">
                 <label for="contractTransaction">Contract Transaction</label>
-                <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="" autocomplete="off" v-model="contractTransaction" required>
+                <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="" autocomplete="off" v-model="form.contractTransaction" required>
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Audit</button>
-    </form>
-</div>
+    <!-- </form> -->
+<!-- </div> -->
 
 <div id="output" class="container"></div>
 
-<div id="response">
-    <pre></pre>
+<div id="response" style="margin-top: 30px">
+    <pre v-if="success == true">
+        <p v-if="result.lock_time_expired == true" style="color: red">Warning: Locktime expired! Do not interact with this contract !</p>
+    </pre>
+
+    <pre v-if="success == true"><p>Debug output:</p>${result}</pre>
+    <pre v-if="error.length > 0">${error}</pre>
 </div>
+
+</form>
 
 <script>
     const app = new Vue({
+        delimiters: ['${', '}'],
         el: '#audit-form',
         data() {
             return {
                 form: {
-                    coin: 'via',
-                    contractHex: '6382012088a820b9c1d630a5de7f1fc9d8ce868f5418e81bdf467296654480156505800f90f1828876a914c4ecdb11e3985a96e001079629ffe1d94150379467041dc8495cb17576a9148e4d174eb2236d8ab0c5bb250df08a5af054d3206888ac',
-                    contractTransaction: '02000000012c1f6c9a3aa221d7552ce6c5a8353c4bc00f88e826428080020b4a7c7b3468ba000000006a47304402200e5ff7fb37cb0499b21b17a71206b411b5b1668e36f6c48783cac5110ccbab0202207403f6d29580849bdc8d5d167e89694bf41ac6d1fbde81af35b866d733f6cb5c012102a7b08bb2a3609223a185761231d815e287ec13b74ccff3feb274253f7737356affffffff0180ce341d0000000017a914957e1287bcd0d620d3c7c496be6106cb37e4165b8700000000'
-                }
+                    coin: "",
+                    contractHex: "",
+                    contractTransaction: ""
+                },
+                success: false,
+                result: [],
+                error: [],
             };
         },
         methods: {
             processForm: function () {
+                console.log(this.form)
                 axios({
                     method: 'POST',
                     url: 'http://127.0.0.1:8000/api/audit',
                     data: new URLSearchParams(this.form).toString(),  // {
-                     //   coin: 'via',
-                    //    contractHex: "6382012088a820b9c1d630a5de7f1fc9d8ce868f5418e81bdf467296654480156505800f90f1828876a914c4ecdb11e3985a96e001079629ffe1d94150379467041dc8495cb17576a9148e4d174eb2236d8ab0c5bb250df08a5af054d3206888ac",
-                     //   contactTransaction: "02000000012c1f6c9a3aa221d7552ce6c5a8353c4bc00f88e826428080020b4a7c7b3468ba000000006a47304402200e5ff7fb37cb0499b21b17a71206b411b5b1668e36f6c48783cac5110ccbab0202207403f6d29580849bdc8d5d167e89694bf41ac6d1fbde81af35b866d733f6cb5c012102a7b08bb2a3609223a185761231d815e287ec13b74ccff3feb274253f7737356affffffff0180ce341d0000000017a914957e1287bcd0d620d3c7c496be6106cb37e4165b8700000000",
-                  //  },
-                   // config: {
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        }
-                   // }
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
                 }).then((response) => {
-                //     console.log(response.data)
-                 })
+                    if (response.data.success == true) {
+                        this.success = true
+                        this.result = response.data.result
+                    }else{
+                        this.error = response.data.error
+                    }
+                })
                     .catch((e) => {
                         console.log(e)
                     })
             }
         }
     });
+
+    //   coin: 'via',
+    //    contractHex: "6382012088a820b9c1d630a5de7f1fc9d8ce868f5418e81bdf467296654480156505800f90f1828876a914c4ecdb11e3985a96e001079629ffe1d94150379467041dc8495cb17576a9148e4d174eb2236d8ab0c5bb250df08a5af054d3206888ac",
+    //   contactTransaction: "02000000012c1f6c9a3aa221d7552ce6c5a8353c4bc00f88e826428080020b4a7c7b3468ba000000006a47304402200e5ff7fb37cb0499b21b17a71206b411b5b1668e36f6c48783cac5110ccbab0202207403f6d29580849bdc8d5d167e89694bf41ac6d1fbde81af35b866d733f6cb5c012102a7b08bb2a3609223a185761231d815e287ec13b74ccff3feb274253f7737356affffffff0180ce341d0000000017a914957e1287bcd0d620d3c7c496be6106cb37e4165b8700000000",
 </script>
 
 
