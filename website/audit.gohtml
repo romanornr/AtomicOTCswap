@@ -4,7 +4,9 @@
 <body>
 {{template "menu"}}
 
-
+<style type="text/css">
+    p {margin-bottom: -1em;  margin-top: 0em;}
+</style>
 <div class="container" >
     <form id="audit-form" @submit.prevent="processForm">
 
@@ -34,15 +36,18 @@
     <!-- </form> -->
 <!-- </div> -->
 
-<div id="output" class="container"></div>
-
 <div id="response" style="margin-top: 30px">
     <pre v-if="success == true">
         <p v-if="result.lock_time_expired == true" style="color: red">Warning: Locktime expired! Do not interact with this contract !</p>
-    </pre>
-
-    <pre v-if="success == true"><p>Debug output:</p>${result}</pre>
-    <pre v-if="error.length > 0">${error}</pre>
+        The address for the ${result["contract_asset"]} contract is: ${result["contract_address"]}
+        Address ${result["recipient_address"]} will receive ${result["contract_value"]} ${result["unit"]} <br>
+        Secret hash: ${result["secret_hash"]}<br>
+        The author of the contract can do a refund in case the contract fails. For example if the counterparty misbehaves or messes up.
+        The refund of ${result["contract_value"]} ${result["unit"]} will be send to ${result["author_refund_address"]}</p>
+        </pre>
+    <code v-if="success == true">debug output</code>
+    <pre v-if="success == true">${result}</pre>
+    <pre v-if="error.length > 0" style="color: red">${error}</pre>
 </div>
 
 </form>
@@ -65,7 +70,6 @@
         },
         methods: {
             processForm: function () {
-                console.log(this.form)
                 axios({
                     method: 'POST',
                     url: 'http://127.0.0.1:8000/api/audit',
@@ -80,10 +84,9 @@
                     }else{
                         this.error = response.data.error
                     }
+                }).catch((e) => {
+                    console.log(e)
                 })
-                    .catch((e) => {
-                        console.log(e)
-                    })
             }
         }
     });
