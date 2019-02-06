@@ -42,7 +42,8 @@
         The address for the ${result["contract_asset"]} contract is: ${result["contract_address"]}
         Address ${result["recipient_address"]} will receive ${result["contract_value"]} ${result["unit"]} <br>
         Secret hash: ${result["secret_hash"]}<br>
-        The author of the contract can do a refund in case the contract fails. For example if the counterparty misbehaves or messes up.
+        The author of the contract can do a refund in case the contract fails.
+        For example if the counterparty misbehaves or messes up.
         The refund of ${result["contract_value"]} ${result["unit"]} will be send to ${result["author_refund_address"]}</p>
         </pre>
     <code v-if="success == true">debug output</code>
