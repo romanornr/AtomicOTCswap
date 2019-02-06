@@ -4,7 +4,6 @@
 <body>
 {{template "menu"}}
 
-
 <div class="container" id="audit-form">
     <form @submit.prevent="processForm">
 
@@ -39,22 +38,51 @@
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Initiate contract</button>
+        <p v-show="success == true" align="center"><button type="button" class="btn btn-outline-success" onclick="printPage()">Print/Save Atomic Swap Details</button></p>
 
         <div id="response" style="margin-top: 30px">
-    <pre v-if="success == true">
+            <pre v-show="success == true">Address ${result["counter_party_address"]} will receive ${result["contract_amount"]} ${result["unit"]}
 
-        </pre>
-            <code v-if="success == true">debug output</code>
-            <pre v-if="success == true">${result}</pre>
-            <pre v-if="error.length > 0" style="color: red">${error}</pre>
+            Give these details to the counterparty<br></pre>
+
+        <code v-show="success == true" style="margin-bottom: 20px">
+            Secret Hash: ${result["secret_hash"]}<br>
+            Contact Hex: ${result["contract_hex"]}<br>
+            Contract Transaction: ${result["contract_transaction_hex"]}</br>
+        </code><br>
+
+            <pre v-show="success == true">Save these details. Required when redeeming the asset or refund<br></pre>
+            <code v-show="success == true" style="margin-bottom: 20px">
+                Secret: ${result["secret"]}<br>
+                Refund transaction: ${result["refund_transaction"]}</br>
+            </code><br>
+
+            <code v-show="success == true">debug output</code>
+            <pre v-show="success == true">${result}</pre>
+            <pre v-show="error.length > 0" style="color: red">${error}</pre>
         </div>
-
-
     </form>
 </div>
 
 
 <script>
+
+    function printPage(){
+        var mywindow = window.open('', 'PRINT', 'height=400,width=600');
+
+        mywindow.document.write('<html><head><title>' + document.title  + '</title>');
+        mywindow.document.write('</head><body >');
+        mywindow.document.write('<h1>' + "Atomic OTC Swap"  + '</h1>');
+        mywindow.document.write(document.getElementById("response").innerHTML);
+        mywindow.document.write('</body></html>');
+
+        mywindow.document.close(); // necessary for IE >= 10
+        mywindow.focus(); // necessary for IE >= 10*/
+
+        mywindow.print();
+        mywindow.close();
+    }
+
     const app = new Vue({
         delimiters: ['${', '}'],
         el: '#audit-form',
