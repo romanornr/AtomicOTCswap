@@ -43,6 +43,7 @@ var coins = map[string]Coin{
 		Network: &Network{Name: "litecoin", P2PKH: 0x30, P2SH: 0x32, PrivateKeyID: 0xB0, HDCoinType: 2, HDPrivateKeyID: [4]byte{0x04, 0x88, 0xad, 0xe4}, HDPublicKeyID: [4]byte{0x04, 0x88, 0xb2, 0x1e}, magic: 0xfbc0b6db},
 		Insight: &Insight{"https://insight.litecore.io", "https://insight.litecore.io/api"}, TxVersion: 2, MinRelayTxFee: 0.001, FeePerByte: 280,
 	},
+
 	//TODO add Decred, Zcoin, Vercoin
 }
 

@@ -63,14 +63,16 @@
         </div>
     </form>
 
+    <div id="broadcast" v-show="success == true">
     <form @submit.prevent="broadcastForm">
         <div class="form-group col-md-6">
             <label for="contractHex">Raw transaction</label>
             <input type="text" class="form-control" id="rawTransaction" name="rawTransaction" placeholder="" autocomplete="off" v-model="form.contractTransaction" disabled>
         </div>
 
-        <p align="center"><button type="submit"  class="btn btn-success">Broadcast/Intialize swap</button></p>
+        <p align="center"><button type="submit" class="btn btn-success">Broadcast/Intialize swap</button></p>
     </form>
+    </div>
 
 </div>
 

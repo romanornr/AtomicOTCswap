@@ -100,8 +100,6 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 		return redemption, fmt.Errorf("getrawchangeaddress: %v", err)
 	}
 
-	fmt.Println(addr)
-
 	outScript, err := txscript.PayToAddrScript(addr)
 	if err != nil {
 		return redemption, err
