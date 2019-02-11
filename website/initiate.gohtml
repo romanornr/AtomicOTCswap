@@ -62,6 +62,16 @@
             <pre v-show="error.length > 0" style="color: red">${error}</pre>
         </div>
     </form>
+
+    <form @submit.prevent="broadcastForm">
+        <div class="form-group col-md-6">
+            <label for="contractHex">Raw transaction</label>
+            <input type="text" class="form-control" id="rawTransaction" name="rawTransaction" placeholder="" autocomplete="off" v-model="form.contractTransaction" disabled>
+        </div>
+
+        <p align="center"><button type="submit"  class="btn btn-success">Broadcast/Intialize swap</button></p>
+    </form>
+
 </div>
 
 
@@ -91,7 +101,7 @@
                 form: {
                     coin: "",
                     contractHex: "",
-                    contractTransaction: ""
+                    contractTransaction: "",
                 },
                 success: false,
                 result: [],
@@ -111,6 +121,7 @@
                     if (response.data.success == true) {
                         this.success = true
                         this.result = response.data.result
+                        this.form.contractTransaction = response.data.result["contract_transaction_hex"]
                     }else{
                         this.error = response.data.error
                     }
@@ -119,12 +130,16 @@
                 })
                 this.clear()
             },
+            broadcastForm: function () {
+                console.log("test")
+            },
             clear: function () {
                 this.result = []
                 this.error = []
-            }
+            },
         }
     });
+
 </script>
 
 </body>
