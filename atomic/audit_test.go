@@ -16,7 +16,7 @@ func TestAuditContract(t *testing.T) {
 		t.Errorf("Expected contract address to be %s but instead got %s\n", expectedAddress, contract.Address)
 	}
 
-	expectedValue, _  := btcutil.NewAmount(0.001)
+	expectedValue, _ := btcutil.NewAmount(0.001)
 	if contract.Value != expectedValue.ToBTC() {
 		t.Errorf("Expected contract value to be %v but got %v instead\n", expectedValue, contract.Value)
 	}

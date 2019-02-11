@@ -75,7 +75,7 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 	locktime := time.Now().Add(1 * time.Hour).Unix()
 
 	build, err := buildContract(&contractArgs{
-		coin:      coin,
+		coin:       coin,
 		them:       cmd.counterParty1Addr,
 		amount:     cmd.amount,
 		locktime:   locktime,
@@ -103,7 +103,7 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 		ContractFee:       build.contractFee.ToBTC(),
 		ContractRefundFee: build.refundFee.ToBTC(),
 		ContractAddress:   fmt.Sprintf("%v", build.contractP2SH),
-		ContractHex:     fmt.Sprintf("%x", build.contract),
+		ContractHex:       fmt.Sprintf("%x", build.contract),
 
 		ContractTransactionID:  fmt.Sprintf("%x", build.contractTxHash),
 		ContractTransactionHex: fmt.Sprintf("%x", contractBuf.Bytes()),

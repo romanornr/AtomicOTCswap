@@ -22,11 +22,11 @@ type redeemCmd struct {
 }
 
 type Redemption struct {
-	Coin string `json:"coin"`
-	Unit string `json:"unit"`
-	Fee float64 `json:"fee"`
-	TransactionHash string `json:"transaction_hash"`
-	TransactionHex string `json:"transaction_hex"`
+	Coin            string  `json:"coin"`
+	Unit            string  `json:"unit"`
+	Fee             float64 `json:"fee"`
+	TransactionHash string  `json:"transaction_hash"`
+	TransactionHex  string  `json:"transaction_hex"`
 }
 
 // coinTicker should be the coin the participant wants to redeem from the counter party
@@ -163,12 +163,11 @@ func (cmd *redeemCmd) runRedeem(wif *btcutil.WIF, coin *bcoins.Coin) (redemption
 	}
 
 	redemption = Redemption{
-		Coin: coin.Name,
-		Unit: coin.Unit,
-		Fee: fee.ToBTC(),
+		Coin:            coin.Name,
+		Unit:            coin.Unit,
+		Fee:             fee.ToBTC(),
 		TransactionHash: fmt.Sprintf("%v", &redeemTxHash),
-		TransactionHex: fmt.Sprintf("%x", buf.Bytes()),
-
+		TransactionHex:  fmt.Sprintf("%x", buf.Bytes()),
 	}
 
 	return redemption, nil
@@ -181,7 +180,6 @@ func createRedeemSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Addr
 	}
 	return sig, wif.PrivKey.PubKey().SerializeCompressed(), nil
 }
-
 
 // estimateRedeemSerializeSize returns a worst case serialize size estimates for
 // a transaction that redeems an atomic swap P2SH output.

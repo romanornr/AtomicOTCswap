@@ -9,7 +9,7 @@ import (
 
 type Coin struct {
 	Name          string
-	Unit string
+	Unit          string
 	Symbol        string
 	Network       *Network
 	Insight       *Insight
@@ -35,7 +35,7 @@ type Network struct {
 }
 
 var coins = map[string]Coin{
-	"via": {Name: "viacoin", Symbol: "via", Unit:"VIA", Network: &Network{Name: "viacoin", P2PKH: 0x47, P2SH: 0x21, PrivateKeyID: 0xC7, HDCoinType: 14, magic: 0xcbc6680f},
+	"via": {Name: "viacoin", Symbol: "via", Unit: "VIA", Network: &Network{Name: "viacoin", P2PKH: 0x47, P2SH: 0x21, PrivateKeyID: 0xC7, HDCoinType: 14, magic: 0xcbc6680f},
 		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2, MinRelayTxFee: 0.001, FeePerByte: 110,
 	},
 

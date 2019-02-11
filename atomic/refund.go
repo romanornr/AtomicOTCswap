@@ -103,7 +103,6 @@ func buildRefund(contract []byte, contractTx *wire.MsgTx, feePerKb, minFeePerKb 
 		return nil, 0, err
 	}
 
-
 	pushes, err := txscript.ExtractAtomicSwapDataPushes(0, contract)
 	if err != nil {
 		//expected only to be called with good input

@@ -22,7 +22,7 @@ type InitiatedContract struct {
 	ContractAmount         float64 `json:"contract_amount"`
 	ContractFee            float64 `json:"contract_fee"`
 	ContractRefundFee      float64 `json:"contract_refund_fee"`
-	CounterPartyAddress	   string  `json:"counter_party_address"`
+	CounterPartyAddress    string  `json:"counter_party_address"`
 	ContractAddress        string  `json:"contract_address"`
 	ContractHex            string  `json:"contract_hex"`
 	ContractTransactionID  string  `json:"contract_transaction_id"`
@@ -77,7 +77,7 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount f
 	locktime := time.Now().Add(1 * time.Hour).Unix() // NEED TO CHANGE
 
 	build, err := buildContract(&contractArgs{
-		coin:      coin,
+		coin:       coin,
 		them:       cmd.counterParty2Addr,
 		amount:     cmd.amount,
 		locktime:   locktime,
@@ -111,8 +111,8 @@ func (cmd *initiateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amount f
 		ContractRefundFee: build.refundFee.ToBTC(),
 
 		CounterPartyAddress: fmt.Sprintf("%s", cmd.counterParty2Addr.String()),
-		ContractAddress: fmt.Sprintf("%v", build.contractP2SH),
-		ContractHex:     fmt.Sprintf("%x", build.contract),
+		ContractAddress:     fmt.Sprintf("%v", build.contractP2SH),
+		ContractHex:         fmt.Sprintf("%x", build.contract),
 
 		ContractTransactionID:  fmt.Sprintf("%x", build.contractTxHash),
 		ContractTransactionHex: fmt.Sprintf("%x", contractBuf.Bytes()),

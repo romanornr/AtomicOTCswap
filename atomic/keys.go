@@ -7,8 +7,8 @@ import (
 	btcutil "github.com/viacoin/viautil"
 )
 
-func GenerateNewWIF() (*btcutil.WIF, error){
-	secret , err := btcec.NewPrivateKey(btcec.S256())
+func GenerateNewWIF() (*btcutil.WIF, error) {
+	secret, err := btcec.NewPrivateKey(btcec.S256())
 	if err != nil {
 		return nil, err
 	}

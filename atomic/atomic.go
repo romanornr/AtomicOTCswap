@@ -27,7 +27,7 @@ type Command struct {
 }
 
 type contractArgs struct {
-	coin      *bcoins.Coin
+	coin       *bcoins.Coin
 	them       *btcutil.AddressPubKeyHash
 	amount     btcutil.Amount
 	locktime   int64
@@ -129,7 +129,6 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		tx.TxIn[idx].SignatureScript = sigScript
 	}
 
-
 	change := availableAmountToSpend - int64(amount)
 	var fee btcutil.Amount
 
@@ -149,7 +148,7 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		fee = feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize(), coin)
 		change -= int64(fee)
 		if change < 0 {
-			return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try an amount of %f %s", fee.ToBTC(), coin.Unit, (amount-fee).ToBTC(), coin.Unit)
+			return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try an amount of %f %s", fee.ToBTC(), coin.Unit, (amount - fee).ToBTC(), coin.Unit)
 		}
 		// reassign change output
 		changeOutput = wire.NewTxOut(change, changeSendToScript)

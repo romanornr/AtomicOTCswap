@@ -1,8 +1,8 @@
 package bcoins
 
 type Transaction struct {
-	AssetName           string `json:"asset_name"`
-	AssetSymbol         string `json:"asset_symbol"`
+	AssetName          string `json:"asset_name"`
+	AssetSymbol        string `json:"asset_symbol"`
 	TxId               string `json:"txid"`
 	SourceAddress      string `json:"source_address"`
 	DestinationAddress string `json:"destination_address"`

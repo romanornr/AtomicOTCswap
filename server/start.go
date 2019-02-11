@@ -2,10 +2,10 @@ package server
 
 import (
 	"fmt"
+	"github.com/gorilla/handlers"
 	"html/template"
 	"log"
 	"net/http"
-	"github.com/gorilla/handlers"
 )
 
 var tpl *template.Template
