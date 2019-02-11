@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/romanornr/AtomicOTCswap/atomic"
+	"github.com/romanornr/AtomicOTCswap/bcoins"
+	"github.com/romanornr/AtomicOTCswap/insight"
 	"log"
 	"net/http"
 	"strconv"
@@ -30,6 +32,7 @@ func createRouter() *mux.Router {
 	api.HandleFunc("/participate", ParticipateHandler).Methods("POST")
 	api.HandleFunc("/redeem", RedemptionHandler).Methods("POST")
 	api.HandleFunc("/extractsecret", SecretHandler).Methods("POST")
+	api.HandleFunc("/broadcast", broadcastHander).Methods("POST")
 	http.Handle("/", r)
 
 	return r
@@ -102,18 +105,23 @@ func AuditSiteHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-//type UserInput struct {
-//	Coin                string `json:"coin"`
-//	ContractHex         string `json:"contractHex"`
-//	ContractTransaction string `json:"contractTransaction"`
-//}
-
 // audit a contract by giving the coin symbol, contract hex and contract transaction
 // from the contract which needs to be audited
 func AuditHandler(w http.ResponseWriter, req *http.Request) {
-	//form := req.Form
 	contract, err := atomic.AuditContract(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"))
 	respond(w, contract, err)
+}
+
+func broadcastHander(w http.ResponseWriter, req *http.Request) {
+	asset := req.FormValue("asset")
+	rawTransaction := req.FormValue("rawTransaction")
+	coin, err := bcoins.SelectCoin(asset)
+
+	tx := bcoins.Transaction{}
+	tx.SignedTx  = rawTransaction
+
+	_, transaction, err := insight.BroadcastTransaction(coin, tx)
+	respond(w, transaction, err)
 }
 
 func respond(w http.ResponseWriter, data interface{}, err error) {

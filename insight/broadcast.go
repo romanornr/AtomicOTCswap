@@ -19,6 +19,10 @@ const ErrTxDecodeFailed = "Something seems wrong: TX decode failed. Code:-2"
 //broadcast a signed transaction to the blockexplorer.
 //the transaction will either be denied or rejected by the network
 func BroadcastTransaction(asset bcoins.Coin, tx bcoins.Transaction) (insightjson.Txid, bcoins.Transaction, error) {
+
+	tx.AssetSymbol = asset.Symbol
+	tx.AssetName = asset.Name
+
 	jsonData := insightjson.InsightRawTx{Rawtx: tx.SignedTx}
 	jsonValue, err := json.Marshal(jsonData)
 	if err != nil {
@@ -56,11 +60,13 @@ func BroadcastTransaction(asset bcoins.Coin, tx bcoins.Transaction) (insightjson
 		}
 	}
 
-	var txid = insightjson.Txid{}
-	err = json.Unmarshal([]byte(result), &txid)
+	var txId = insightjson.Txid{}
+	err = json.Unmarshal([]byte(result), &txId)
 	if err != nil {
-		return txid, bcoins.Transaction{}, fmt.Errorf("something went wrong with receiving your txid")
+		return txId, bcoins.Transaction{}, fmt.Errorf("something went wrong with receiving your txid")
 	}
 
-	return txid, tx, nil
+	tx.TxId = txId.Txid
+
+	return txId, tx, nil
 }
