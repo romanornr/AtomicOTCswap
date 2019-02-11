@@ -153,7 +153,7 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		}
 		// reassign change output
 		changeOutput = wire.NewTxOut(change, changeSendToScript)
-		tx.AddTxOut(changeOutput)
+		//tx.AddTxOut(changeOutput) // TODO FIX THIS
 	}
 
 	signedTx := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
