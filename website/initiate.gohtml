@@ -125,6 +125,7 @@
                         this.result = response.data.result
                         this.form.contractTransaction = response.data.result["contract_transaction_hex"]
                     }else{
+                        this.success = false
                         this.error = response.data.error
                     }
                 }).catch((e) => {

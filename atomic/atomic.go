@@ -148,7 +148,8 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		fee = feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize(), coin)
 		change -= int64(fee)
 		if change < 0 {
-			return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try an amount of %f %s", fee.ToBTC(), coin.Unit, (amount - fee).ToBTC(), coin.Unit)
+			maxAmountAvailable := btcutil.Amount(change) + amount
+			return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try %v %s", fee.ToBTC(), coin.Unit, maxAmountAvailable.ToBTC(), coin.Unit)
 		}
 		// reassign change output
 		changeOutput = wire.NewTxOut(change, changeSendToScript)
