@@ -131,22 +131,19 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to spend, Available amount %f %s", btcutil.Amount(availableAmountToSpend).ToBTC(), coin.Unit)
 	}
 
-	if change >= 0 {
+
 		changeAddress := sourceAddress
 		changeSendToScript, err := txscript.PayToAddrScript(changeAddress)
 		if err != nil {
 			return &wire.MsgTx{}, 0, false, fmt.Errorf("change address wrong\n")
 		}
 
-		// calculate fees in
+	if change >= 0 {
 		changeOutput := wire.NewTxOut(change, changeSendToScript)
-		fee = feeEstimationBySize(tx.SerializeSize()+changeOutput.SerializeSize(), coin)
-		change -= int64(fee)
-		if change < 0 {
-			maxAmountAvailable := btcutil.Amount(change) + amount
-			return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try %v %s", fee.ToBTC(), coin.Unit, maxAmountAvailable.ToBTC(), coin.Unit)
-		}
-		// reassign change output
+		//if change < 0 {
+		//	maxAmountAvailable := btcutil.Amount(change) + amount
+		//	return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try %v %s", fee.ToBTC(), coin.Unit, maxAmountAvailable.ToBTC(), coin.Unit)
+		//}
 		changeOutput = wire.NewTxOut(change, changeSendToScript)
 		tx.AddTxOut(changeOutput) // TODO NO CHANGE OUTPUT IF ITS DUST
 	}
@@ -160,12 +157,25 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		tx.TxIn[i].SignatureScript = sigScript
 	}
 
+	fee = feeEstimationBySize(tx.SerializeSize(), coin)
+	change -= int64(fee)
+	tx.TxOut[1] = wire.NewTxOut(change, changeSendToScript)
+
+	for i := range sourceUTXOs {
+		sigScript, err := txscript.SignatureScript(tx, i, sourcePKScript, txscript.SigHashAll, wif.PrivKey, true)
+		if err != nil {
+			fmt.Errorf("error signing source UTXO's\n")
+		}
+		tx.TxIn[i].SignatureScript = sigScript
+	}
+
 	signedTx := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
 	if err := tx.Serialize(signedTx); err != nil {
 		return &wire.MsgTx{}, 0, false, fmt.Errorf("failed to sign tx")
 	}
+	fmt.Printf("size: %d", tx.SerializeSize())
 
-	return tx, fee, true, nil // TODO comment tx.AddTxOut(changeOutput) when issues with creating swap or refund
+	return tx, fee, true, nil
 }
 
 //// TODO maybe fee per byte to 279
