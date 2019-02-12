@@ -131,22 +131,14 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to spend, Available amount %f %s", btcutil.Amount(availableAmountToSpend).ToBTC(), coin.Unit)
 	}
 
-
-		changeAddress := sourceAddress
-		changeSendToScript, err := txscript.PayToAddrScript(changeAddress)
-		if err != nil {
-			return &wire.MsgTx{}, 0, false, fmt.Errorf("change address wrong\n")
-		}
-
-	if change >= 0 {
-		changeOutput := wire.NewTxOut(change, changeSendToScript)
-		//if change < 0 {
-		//	maxAmountAvailable := btcutil.Amount(change) + amount
-		//	return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try %v %s", fee.ToBTC(), coin.Unit, maxAmountAvailable.ToBTC(), coin.Unit)
-		//}
-		changeOutput = wire.NewTxOut(change, changeSendToScript)
-		tx.AddTxOut(changeOutput) // TODO NO CHANGE OUTPUT IF ITS DUST
+	// reserve space for change transaction
+	changeAddress := sourceAddress
+	changeSendToScript, err := txscript.PayToAddrScript(changeAddress)
+	if err != nil {
+		return &wire.MsgTx{}, 0, false, fmt.Errorf("change address wrong\n")
 	}
+	changeOutput := wire.NewTxOut(change, changeSendToScript)
+	tx.AddTxOut(changeOutput)
 
 	// sign all transactions
 	for i := range sourceUTXOs {
@@ -159,7 +151,19 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 
 	fee = feeEstimationBySize(tx.SerializeSize(), coin)
 	change -= int64(fee)
+
+	if change < 0 {
+		return &wire.MsgTx{}, 0, false, fmt.Errorf("not enough funds to cover the fee of %f %s. Try %v %s", fee.ToBTC(), coin.Unit, btcutil.Amount(change).ToBTC()+amount.ToBTC(), coin.Unit)
+	}
+
+	// set change transaction with the right change amount
 	tx.TxOut[1] = wire.NewTxOut(change, changeSendToScript)
+
+	// if the change is equal or smaller than the defined dust
+	// remove the change transaction
+	if change <= coin.Dust {
+		tx.TxOut = tx.TxOut[:len(tx.TxOut)-1]
+	}
 
 	for i := range sourceUTXOs {
 		sigScript, err := txscript.SignatureScript(tx, i, sourcePKScript, txscript.SigHashAll, wif.PrivKey, true)
