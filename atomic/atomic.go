@@ -18,7 +18,6 @@ import (
 const (
 	verify     = true
 	secretSize = 32
-	txVersion  = 2
 )
 
 type Command struct {
@@ -76,7 +75,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 		return nil, err
 	}
 
-	unsignedContract := wire.NewMsgTx(txVersion)
+	unsignedContract := wire.NewMsgTx(args.coin.TxVersion)
 	unsignedContract.AddTxOut(wire.NewTxOut(int64(args.amount), contractP2SHPkScript))
 
 	contractTx, contractFee, complete, err := fundAndSignRawTransaction(unsignedContract, wif, args.amount, args.coin)
