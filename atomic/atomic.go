@@ -116,17 +116,12 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 	sourceUTXOs := insight.GetMinimalRequiredUTXO(int64(amount), unspentOutputs)
 	var availableAmountToSpend int64
 
+	// combine inputs
 	for idx := range sourceUTXOs {
 		availableAmountToSpend += sourceUTXOs[idx].Amount
 		sourceUTXO := wire.NewOutPoint(sourceUTXOs[idx].Hash, sourceUTXOs[idx].TxIndex)
 		sourceTxIn := wire.NewTxIn(sourceUTXO, nil, nil)
 		tx.AddTxIn(sourceTxIn)
-
-		sigScript, err := txscript.SignatureScript(tx, idx, sourcePKScript, txscript.SigHashAll, wif.PrivKey, true)
-		if err != nil {
-			fmt.Errorf("error signing source UTXO's\n")
-		}
-		tx.TxIn[idx].SignatureScript = sigScript
 	}
 
 	change := availableAmountToSpend - int64(amount)
@@ -153,7 +148,16 @@ func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.
 		}
 		// reassign change output
 		changeOutput = wire.NewTxOut(change, changeSendToScript)
-		//tx.AddTxOut(changeOutput) // TODO FIX THIS
+		tx.AddTxOut(changeOutput) // TODO NO CHANGE OUTPUT IF ITS DUST
+	}
+
+	// sign all transactions
+	for i := range sourceUTXOs {
+		sigScript, err := txscript.SignatureScript(tx, i, sourcePKScript, txscript.SigHashAll, wif.PrivKey, true)
+		if err != nil {
+			fmt.Errorf("error signing source UTXO's\n")
+		}
+		tx.TxIn[i].SignatureScript = sigScript
 	}
 
 	signedTx := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
