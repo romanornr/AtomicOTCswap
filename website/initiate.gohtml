@@ -74,6 +74,11 @@
     </form>
     </div>
 
+    <div id="broadcastData" v-show="broadcastSuccess == true">
+        <p>Atomicswap successfully initialized. The counterparty can participate now.</p>
+        <code>$transaction["asset_name"]} txid: $transaction["txid"]}</code>
+    </div>
+
 </div>
 
 
@@ -110,6 +115,7 @@
                     rawTransaction: "",
                 },
                 success: false,
+                broadcastSuccess: false,
                 result: [],
                 transaction: [],
                 error: [],
@@ -132,7 +138,6 @@
                         this.broadcastForm.asset = this.form.coin
                         this.broadcastForm.rawTransaction = this.form.contractTransaction
                     }else{
-                        this.success = false
                         this.error = response.data.error
                     }
                 }).catch((e) => {
@@ -152,6 +157,7 @@
                 }).then((response) => {
                     if (response.data.success == true) {
                         this.success = true
+                        this.broadcastSuccess = true
                         this.transaction = response.data.result
                     }else{
                         this.success = false
