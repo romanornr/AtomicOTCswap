@@ -64,7 +64,7 @@
     </form>
 
     <div id="broadcast" v-show="success == true">
-    <form @submit.prevent="broadcastForm">
+    <form @submit.prevent="processBroadcastForm">
         <div class="form-group col-md-6">
             <label for="contractHex">Raw transaction</label>
             <input type="text" class="form-control" id="rawTransaction" name="rawTransaction" placeholder="" autocomplete="off" v-model="form.contractTransaction" disabled>
@@ -105,8 +105,13 @@
                     contractHex: "",
                     contractTransaction: "",
                 },
+                broadcastForm: {
+                    asset: "",
+                    rawTransaction: "",
+                },
                 success: false,
                 result: [],
+                transaction: [],
                 error: [],
             };
         },
@@ -124,6 +129,8 @@
                         this.success = true
                         this.result = response.data.result
                         this.form.contractTransaction = response.data.result["contract_transaction_hex"]
+                        this.broadcastForm.asset = this.form.coin
+                        this.broadcastForm.rawTransaction = this.form.contractTransaction
                     }else{
                         this.success = false
                         this.error = response.data.error
@@ -133,12 +140,31 @@
                 })
                 this.clear()
             },
-            broadcastForm: function () {
-                console.log("test")
+            processBroadcastForm: function () {
+                console.log("exec")
+                axios({
+                    method: 'POST',
+                    url: 'http://127.0.0.1:8000/api/broadcast',
+                    data: new URLSearchParams(this.broadcastForm).toString(),  // {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                }).then((response) => {
+                    if (response.data.success == true) {
+                        this.success = true
+                        this.transaction = response.data.result
+                    }else{
+                        this.success = false
+                        this.error = response.data.error
+                    }
+                }).catch((e) => {
+                    console.log(e)
+                })
             },
             clear: function () {
                 this.result = []
                 this.error = []
+                this.transaction = []
             },
         }
     });
