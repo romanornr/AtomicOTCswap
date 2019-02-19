@@ -33,12 +33,15 @@ var vueutil = {
     },
 
     laddaStart: function () {
-        var button = document.querySelector('button[type=submit]');
-        if (!button.hasAttribute('data-style')) {
-            button.setAttribute('data-style', 'zoom-out');
+        var buttons = document.querySelectorAll('button[type=submit]');
+        for (var i = 0; i < buttons.length; i++) {
+            var button = buttons[i];
+            if (!button.hasAttribute('data-style')) {
+                button.setAttribute('data-style', 'zoom-out');
+            }
+            var l = Ladda.create(button);
+            l.start();
         }
-        var l = Ladda.create(button);
-        l.start();
     },
 
     laddaStop: function () {
