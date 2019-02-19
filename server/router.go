@@ -25,6 +25,7 @@ func createRouter() *mux.Router {
 	r.HandleFunc("/audit", AuditSiteHandler).Methods("GET")
 	r.HandleFunc("/participate", participateSiteHandler).Methods("GET")
 	r.HandleFunc("/redeem", RedemptionSiteHandler).Methods("GET")
+	r.HandleFunc("/secret", secretSiteHandler).Methods("GET")
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/audit", AuditHandler).Methods("POST")
@@ -91,6 +92,14 @@ func RedemptionSiteHandler(w http.ResponseWriter, r *http.Request) {
 func RedemptionHandler(w http.ResponseWriter, req *http.Request) {
 	redemption, err := atomic.Redeem(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"), req.FormValue("secret"), req.FormValue("wif"))
 	respond(w, redemption, err)
+}
+
+
+func secretSiteHandler(w http.ResponseWriter, _ *http.Request) {
+	err := tpl.ExecuteTemplate(w, "secret.gohtml", nil)
+	if err != nil {
+		log.Printf("error template secret")
+	}
 }
 
 func SecretHandler(w http.ResponseWriter, req *http.Request) {
