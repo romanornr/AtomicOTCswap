@@ -32,7 +32,7 @@ func createRouter() *mux.Router {
 	api.HandleFunc("/participate", ParticipateHandler).Methods("POST")
 	api.HandleFunc("/redeem", RedemptionHandler).Methods("POST")
 	api.HandleFunc("/extractsecret", SecretHandler).Methods("POST")
-	api.HandleFunc("/broadcast", broadcastHander).Methods("POST")
+	api.HandleFunc("/broadcast", broadcastHandler).Methods("POST")
 	http.Handle("/", r)
 
 	return r
@@ -112,7 +112,7 @@ func AuditHandler(w http.ResponseWriter, req *http.Request) {
 	respond(w, contract, err)
 }
 
-func broadcastHander(w http.ResponseWriter, req *http.Request) {
+func broadcastHandler(w http.ResponseWriter, req *http.Request) {
 	asset := req.FormValue("asset")
 	rawTransaction := req.FormValue("rawTransaction")
 	coin, err := bcoins.SelectCoin(asset)
