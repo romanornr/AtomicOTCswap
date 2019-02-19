@@ -2,7 +2,7 @@
 
 var vueutil = {
     post: function (vuectrl, postUrl, postData, handler) {
-        //this.laddaStart();
+        this.laddaStart();
         var postData = vuectrl.srvModel;
         vuectrl.modelstate = {};
         axios({
@@ -28,7 +28,7 @@ var vueutil = {
                 console.log(error);
             }
         }).finally(() => {
-            //this.laddaStop()
+            this.laddaStop()
         });
     },
 
