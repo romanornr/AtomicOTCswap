@@ -3,12 +3,12 @@
 var vueutil = {
     post: function (vuectrl, postUrl, postData, handler) {
         this.laddaStart();
-        var postData = vuectrl.srvModel;
+        var axiosData = new URLSearchParams(postData).toString();
         vuectrl.modelstate = {};
         axios({
             method: 'POST',
             url: URL_ROOT + postUrl,
-            data: new URLSearchParams(postData).toString(),
+            data: axiosData,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
