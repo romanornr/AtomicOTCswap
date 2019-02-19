@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
+	"github.com/romanornr/AtomicOTCswap/key"
 	"github.com/viacoin/viad/txscript"
 	"github.com/viacoin/viad/wire"
 	btcutil "github.com/viacoin/viautil"
@@ -167,7 +168,7 @@ func refundP2SHContract(contract, sig, pubkey []byte) ([]byte, error) {
 }
 
 func createSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, wif *btcutil.WIF, coin *bcoins.Coin) (sig, pubkey []byte, err error) {
-	sourceAddress, _ := GenerateNewPublicKey(*wif, coin)
+	sourceAddress, _ := key.GenerateNewPublicKey(*wif, coin)
 	if sourceAddress.EncodeAddress() != addr.EncodeAddress() {
 		return nil, nil, fmt.Errorf("error signing address: %s\n", sourceAddress)
 	}
@@ -184,7 +185,7 @@ func createSig(tx *wire.MsgTx, idx int, pkScript []byte, addr btcutil.Address, w
 // account parameter which was removed in Viacoin Core 0.15.
 func getRawChangeAddress(wif *btcutil.WIF, coin *bcoins.Coin) (btcutil.Address, error) {
 
-	addr, _ := GenerateNewPublicKey(*wif, coin)
+	addr, _ := key.GenerateNewPublicKey(*wif, coin)
 	address, err := btcutil.DecodeAddress(addr.EncodeAddress(), coin.Network.ChainCgfMainNetParams())
 	if err != nil {
 		return nil, err

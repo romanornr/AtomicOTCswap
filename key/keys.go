@@ -1,4 +1,4 @@
-package atomic
+package key
 
 import (
 	"github.com/romanornr/AtomicOTCswap/bcoins"
