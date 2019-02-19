@@ -45,7 +45,7 @@ func BroadcastTransaction(asset bcoins.Coin, tx bcoins.Transaction) (insightjson
 	}
 
 	if response.StatusCode != 200 { // some error handling if broadcasting fails
-		rejectReason := string(result)
+		rejectReason := fmt.Sprintf("Error %s blockexplorer response status code: %d\n", asset.Name, response.StatusCode)
 		switch rejectReason {
 		case ErrNotEnoughBalance:
 			return insightjson.Txid{}, bcoins.Transaction{}, fmt.Errorf("not enough balance to cover the transaction including the required fees")
