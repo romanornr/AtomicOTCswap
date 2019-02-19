@@ -32,7 +32,7 @@ func createRouter() *mux.Router {
 	api.HandleFunc("/initiate", InitiateHandler).Methods("POST")
 	api.HandleFunc("/participate", ParticipateHandler).Methods("POST")
 	api.HandleFunc("/redeem", RedemptionHandler).Methods("POST")
-	api.HandleFunc("/extractsecret", SecretHandler).Methods("POST")
+	api.HandleFunc("/secret", SecretHandler).Methods("POST")
 	api.HandleFunc("/broadcast", broadcastHandler).Methods("POST")
 	http.Handle("/", r)
 
