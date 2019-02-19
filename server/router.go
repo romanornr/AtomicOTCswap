@@ -3,13 +3,14 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/gorilla/mux"
 	"github.com/romanornr/AtomicOTCswap/atomic"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"github.com/romanornr/AtomicOTCswap/insight"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 type Response struct {
@@ -35,6 +36,8 @@ func createRouter() *mux.Router {
 	api.HandleFunc("/secret", SecretHandler).Methods("POST")
 	api.HandleFunc("/broadcast", broadcastHandler).Methods("POST")
 	http.Handle("/", r)
+
+	r.PathPrefix("/www/").Handler(http.StripPrefix("/www/", http.FileServer(http.Dir("www"))))
 
 	return r
 }
@@ -94,7 +97,6 @@ func RedemptionHandler(w http.ResponseWriter, req *http.Request) {
 	respond(w, redemption, err)
 }
 
-
 func secretSiteHandler(w http.ResponseWriter, _ *http.Request) {
 	err := tpl.ExecuteTemplate(w, "secret.gohtml", nil)
 	if err != nil {
@@ -127,7 +129,7 @@ func broadcastHandler(w http.ResponseWriter, req *http.Request) {
 	coin, err := bcoins.SelectCoin(asset)
 
 	tx := bcoins.Transaction{}
-	tx.SignedTx  = rawTransaction
+	tx.SignedTx = rawTransaction
 
 	_, transaction, err := insight.BroadcastTransaction(coin, tx)
 	respond(w, transaction, err)

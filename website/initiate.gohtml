@@ -123,38 +123,21 @@
         },
         methods: {
             processForm: function () {
-                axios({
-                    method: 'POST',
-                    url: 'http://127.0.0.1:8000/api/initiate',
-                    data: new URLSearchParams(this.form).toString(),  // {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                }).then((response) => {
+                vueutil.post(this, '/api/initiate', this.form, (response) => {
                     if (response.data.success == true) {
                         this.success = true
                         this.result = response.data.result
                         this.form.contractTransaction = response.data.result["contract_transaction_hex"]
                         this.broadcastForm.asset = this.form.coin
                         this.broadcastForm.rawTransaction = this.form.contractTransaction
-                    }else{
+                    } else {
                         this.error = response.data.error
                     }
-                }).catch((e) => {
-                    console.log(e)
-                })
+                });
                 this.clear()
             },
             processBroadcastForm: function () {
-                console.log("exec")
-                axios({
-                    method: 'POST',
-                    url: 'http://127.0.0.1:8000/api/broadcast',
-                    data: new URLSearchParams(this.broadcastForm).toString(),  // {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                }).then((response) => {
+                vueutil.post(this, '/api/broadcast', this.broadcastForm, (response) => {
                     if (response.data.success == true) {
                         this.success = true
                         this.broadcastSuccess = true
@@ -163,9 +146,7 @@
                         this.success = false
                         this.error = response.data.error
                     }
-                }).catch((e) => {
-                    console.log(e)
-                })
+                });
             },
             clear: function () {
                 this.result = []
