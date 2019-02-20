@@ -27,6 +27,7 @@ func createRouter() *mux.Router {
 	r.HandleFunc("/participate", participateSiteHandler).Methods("GET")
 	r.HandleFunc("/redeem", RedemptionSiteHandler).Methods("GET")
 	r.HandleFunc("/secret", secretSiteHandler).Methods("GET")
+	r.HandleFunc("/address", addressSiteHandler).Methods("GET")
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/audit", AuditHandler).Methods("POST")
@@ -135,6 +136,13 @@ func broadcastHandler(w http.ResponseWriter, req *http.Request) {
 
 	_, transaction, err := insight.BroadcastTransaction(coin, tx)
 	respond(w, transaction, err)
+}
+
+func addressSiteHandler(w http.ResponseWriter, _ *http.Request) {
+	err := tpl.ExecuteTemplate(w, "address.gohtml", nil)
+	if err != nil {
+		fmt.Println("error address template")
+	}
 }
 
 func respond(w http.ResponseWriter, data interface{}, err error) {

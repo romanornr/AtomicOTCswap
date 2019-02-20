@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head"}}
+<body>
+{{template "menu"}}
+
+
+<div class="container" id="address-form">
+
+    <h4 class="mb-3" style="color: #838B92">Choose which asset to swap</h4>
+    <form action="/api/address" method="post">
+
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="asset">Deposit Asset</label>
+                <select name="asset" id="asset" class="form-control" v-model="form.asset" required>
+                    <option disabled selected value> -- select an option -- </option>
+                    <option value="btc">Bitcoin</option>
+                    <option value="via">Viacoin</option>
+                    <option value="ltc">Litecoin</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="asset">Receiving Asset</label>
+                <select name="asset" id="asset" class="form-control" v-model="form.asset" required>
+                    <option disabled selected value> -- select an option -- </option>
+                    <option value="btc">Bitcoin</option>
+                    <option value="via">Viacoin</option>
+                    <option value="ltc">Litecoin</option>
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate atomic swap addresses</button>
+    </form>
+
+    <div class="alert alert-warning" role="alert" style="margin-top: 20px">
+        <p>Deposit your funds on the deposit address. After the atomic swap has been completed, you will receive the asset you want on your receiving address</p>
+        <hr>
+        <p class="mb-0">Example: If you have viacoins and you want bitcoins, deposit your viacoins on the deposit address. You will receive bitcoins on your receiving address.</p>
+    </div>
+
+</div>
+
+</body>
+</html>
