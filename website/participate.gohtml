@@ -52,16 +52,10 @@
     <div id="response" style="margin-top: 30px">
             <pre v-show="success == true">Address ${result["counter_party_address"]} will receive ${result["contract_amount"]} ${result["unit"]}
 
-            Give these details to the counterparty<br></pre>
+            Give these details to the counterparty if you are the initiator<br></pre>
 
         <code v-show="success == true" style="margin-bottom: 20px">
-            Contract Hex: ${result["contract_hex"]}<br>
-            Contract Transaction: ${result["contract_transaction_hex"]}</br>
-        </code><br>
-
-        <pre v-show="success == true">Save these details. Required when refunding<br></pre>
-        <code v-show="success == true" style="margin-bottom: 20px">
-            Refund transaction: ${result["refund_transaction"]}</br>
+            Redemption Transaction: ${result["TransactionHex"]}</br>
         </code><br>
 
         <code v-show="success == true">debug output</code>
@@ -82,7 +76,7 @@
     </div>
 
     <div id="broadcastData" v-show="broadcastSuccess == true">
-        <p>Atomicswap successfully initialized. The counterparty can participate now.</p>
+        <p>Successfully participated.</p>
         <code>$transaction["asset_name"]} txid: $transaction["txid"]}</code>
     </div>
 
