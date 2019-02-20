@@ -5,13 +5,13 @@
 {{template "menu"}}
 
 
-<div class="container">
-    <form action="/api/participate" method="post">
+<div class="container" id="participate-form">
+    <form @submit.prevent="processForm">
 
         <div class="form-row">
             <div class="form-group col-md-4">
-                <label for="coin">Asset</label>
-                <select name="coin" id="coin" class="form-control" required>
+                <label for="asset">Asset</label>
+                <select name="asset" id="asset" class="form-control" v-model="form.asset" required>
                     <option disabled selected value> -- select an option -- </option>
                     <option value="btc">Bitcoin</option>
                     <option value="via">Viacoin</option>
@@ -22,14 +22,14 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="contractHex">Your WIF</label>
-                <input type="text" class="form-control" id="wif" name="wif" placeholder="" autocomplete="off" required>
+                <input type="text" class="form-control" id="wif" name="wif" placeholder="" autocomplete="off" v-model="form.wif" required>
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="contractHex">Secret Hash</label>
-                <input type="text" class="form-control" id="secret" name="secret" placeholder="29c36b8dd380e0426bdc1d834e74a630bfd5d111" autocomplete="off" required>
+                <input type="text" class="form-control" id="secretHash" name="secretHash" placeholder="29c36b8dd380e0426bdc1d834e74a630bfd5d111" autocomplete="off" v-model="form.secretHash" required>
             </div>
         </div>
 
@@ -37,17 +37,134 @@
 
             <div class="form-group">
                 <label for="amount">Amount</label>
-                <input type="number" class="form-control" id="contractTransaction" name="amount" placeholder="" autocomplete="off" step="0.00000001" required>
+                <input type="number" class="form-control" id="amount" name="amount" placeholder="" autocomplete="off" step="0.00000001" v-model="form.amount" required>
             </div>
 
             <div class="form-group col-md-6">
                 <label for="contractHex">Counter Party Address</label>
-                <input type="text" class="form-control" id="counterPartyAddr" name="counterPartyAddr" placeholder="" autocomplete="off" required>
+                <input type="text" class="form-control" id="counterPartyAddr" name="counterPartyAddr" placeholder="" autocomplete="off" v-model="form.counterPartyAddr" required>
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Participate contract</button>
+        <p v-show="success == true" align="center"><button type="button" class="btn btn-outline-success" onclick="printPage()">Print/Save Atomic Swap Details</button></p>
     </form>
-</div>
 
+    <div id="response" style="margin-top: 30px">
+            <pre v-show="success == true">Address ${result["counter_party_address"]} will receive ${result["contract_amount"]} ${result["unit"]}
+
+            Give these details to the counterparty<br></pre>
+
+        <code v-show="success == true" style="margin-bottom: 20px">
+            Contract Hex: ${result["contract_hex"]}<br>
+            Contract Transaction: ${result["contract_transaction_hex"]}</br>
+        </code><br>
+
+        <pre v-show="success == true">Save these details. Required when refunding<br></pre>
+        <code v-show="success == true" style="margin-bottom: 20px">
+            Refund transaction: ${result["refund_transaction"]}</br>
+        </code><br>
+
+        <code v-show="success == true">debug output</code>
+        <pre v-show="success == true">${result}</pre>
+        <pre v-show="error.length > 0" style="color: red">${error}</pre>
+    </div>
+    </form>
+
+    <div id="broadcast" v-show="success == true">
+        <form @submit.prevent="processBroadcastForm">
+            <div class="form-group col-md-6">
+                <label for="contractHex">Raw transaction</label>
+                <input type="text" class="form-control" id="rawTransaction" name="rawTransaction" placeholder="" autocomplete="off" v-model="form.contractTransaction" disabled>
+            </div>
+
+            <p align="center"><button type="submit" class="btn btn-success">Broadcast/Participate swap</button></p>
+        </form>
+    </div>
+
+    <div id="broadcastData" v-show="broadcastSuccess == true">
+        <p>Atomicswap successfully initialized. The counterparty can participate now.</p>
+        <code>$transaction["asset_name"]} txid: $transaction["txid"]}</code>
+    </div>
+
+</div>
 </body>
+
+<script>
+
+    function printPage(){
+        var mywindow = window.open('', 'PRINT', 'height=400,width=600');
+
+        mywindow.document.write('<html><head><title>' + document.title  + '</title>');
+        mywindow.document.write('</head><body >');
+        mywindow.document.write('<h1>' + "Atomic OTC Swap - Participate"  + '</h1>');
+        mywindow.document.write(document.getElementById("response").innerHTML);
+        mywindow.document.write('</body></html>');
+
+        mywindow.document.close(); // necessary for IE >= 10
+        mywindow.focus(); // necessary for IE >= 10*/
+
+        mywindow.print();
+        mywindow.close();
+    }
+
+    const app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#participate-form',
+        data() {
+            return {
+                form: {
+                    asset: "",
+                    wif: "",
+                    secretHash: "",
+                    amount: "",
+                    counterPartyAddr: "",
+                },
+                broadcastForm: {
+                    asset: "",
+                    rawTransaction: "",
+                },
+                success: false,
+                broadcastSuccess: false,
+                result: [],
+                transaction: [],
+                error: [],
+            };
+        },
+        methods: {
+            processForm: function () {
+                vueutil.post(this, '/api/participate', this.form, (response) => {
+                    if (response.data.success == true) {
+                        this.success = true
+                        this.result = response.data.result
+                        this.form.contractTransaction = response.data.result["contract_transaction_hex"]
+                        this.broadcastForm.asset = this.form.asset
+                        this.broadcastForm.rawTransaction = this.form.contractTransaction
+                    } else {
+                        this.error = response.data.error
+                    }
+                });
+                this.clear()
+            },
+            processBroadcastForm: function () {
+                vueutil.post(this, '/api/broadcast', this.broadcastForm, (response) => {
+                    if (response.data.success == true) {
+                        this.success = true
+                        this.broadcastSuccess = true
+                        this.transaction = response.data.result
+                    }else{
+                        this.success = false
+                        this.error = response.data.error
+                    }
+                });
+            },
+            clear: function () {
+                this.result = []
+                this.error = []
+                this.transaction = []
+            },
+        }
+    });
+
+</script>
+
 </html>

@@ -4,7 +4,7 @@
 <body>
 {{template "menu"}}
 
-<div class="container" id="audit-form">
+<div class="container" id="initiate-form">
     <form @submit.prevent="processForm">
 
         <div class="form-row">
@@ -47,7 +47,7 @@
 
         <code v-show="success == true" style="margin-bottom: 20px">
             Secret Hash: ${result["secret_hash"]}<br>
-            Contact Hex: ${result["contract_hex"]}<br>
+            Contract Hex: ${result["contract_hex"]}<br>
             Contract Transaction: ${result["contract_transaction_hex"]}</br>
         </code><br>
 
@@ -89,7 +89,7 @@
 
         mywindow.document.write('<html><head><title>' + document.title  + '</title>');
         mywindow.document.write('</head><body >');
-        mywindow.document.write('<h1>' + "Atomic OTC Swap"  + '</h1>');
+        mywindow.document.write('<h1>' + "Atomic OTC Swap - Initiate"  + '</h1>');
         mywindow.document.write(document.getElementById("response").innerHTML);
         mywindow.document.write('</body></html>');
 
@@ -102,7 +102,7 @@
 
     const app = new Vue({
         delimiters: ['${', '}'],
-        el: '#audit-form',
+        el: '#initiate-form',
         data() {
             return {
                 form: {

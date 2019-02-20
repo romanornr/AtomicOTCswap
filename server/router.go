@@ -81,7 +81,9 @@ func ParticipateHandler(w http.ResponseWriter, req *http.Request) {
 		respond(w, nil, err)
 	}
 
-	contract, err := atomic.Participate(req.FormValue("coin"), req.FormValue("counterPartyAddr"), req.FormValue("wif"), amount, req.FormValue("secret"))
+	fmt.Println(req.Form)
+
+	contract, err := atomic.Participate(req.FormValue("asset"), req.FormValue("counterPartyAddr"), req.FormValue("wif"), amount, req.FormValue("secretHash"))
 	respond(w, contract, err)
 }
 

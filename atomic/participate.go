@@ -24,6 +24,7 @@ type ParticipatedContract struct {
 	ContractAmount         float64 `json:"contract_amount"`
 	ContractFee            float64 `json:"contract_fee"`
 	ContractRefundFee      float64 `json:"contract_refund_fee"`
+	CounterPartyAddress    string  `json:"counter_party_address"`
 	ContractAddress        string  `json:"contract_address"`
 	ContractHex            string  `json:"contract_hex"`
 	ContractTransactionID  string  `json:"contract_transaction_id"`
@@ -102,6 +103,8 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 		ContractAmount:    amount,
 		ContractFee:       build.contractFee.ToBTC(),
 		ContractRefundFee: build.refundFee.ToBTC(),
+
+		CounterPartyAddress: fmt.Sprintf("%s", cmd.counterParty1Addr.String()),
 		ContractAddress:   fmt.Sprintf("%v", build.contractP2SH),
 		ContractHex:       fmt.Sprintf("%x", build.contract),
 
