@@ -95,7 +95,7 @@ func RedemptionSiteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RedemptionHandler(w http.ResponseWriter, req *http.Request) {
-	redemption, err := atomic.Redeem(req.FormValue("coin"), req.FormValue("contractHex"), req.FormValue("contractTransaction"), req.FormValue("secret"), req.FormValue("wif"))
+	redemption, err := atomic.Redeem(req.FormValue("asset"), req.FormValue("contractHex"), req.FormValue("contractTransaction"), req.FormValue("secret"), req.FormValue("wif"))
 	respond(w, redemption, err)
 }
 

@@ -5,13 +5,13 @@
 {{template "menu"}}
 
 
-<div class="container">
+<div class="container" id="redemption-form">
     <form action="/api/redeem" method="post">
 
         <div class="form-row">
             <div class="form-group col-md-4">
-                <label for="coin">Asset</label>
-                <select name="coin" id="coin" class="form-control" required>
+                <label for="asset">Asset</label>
+                <select name="asset" id="asset" class="form-control" v-model="form.asset" required>
                     <option disabled selected value> -- select an option -- </option>
                     <option value="btc">Bitcoin</option>
                     <option value="via">Viacoin</option>
@@ -21,33 +21,151 @@
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label for="contractHex">Your WIF</label>
-                <input type="text" class="form-control" id="wif" name="wif" placeholder="" autocomplete="off" required>
+                <label for="wif">Your WIF</label>
+                <input type="text" class="form-control" id="wif" name="wif" placeholder="" autocomplete="off" v-model="form.wif" required>
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label for="contractHex">Secret</label>
-                <input type="text" class="form-control" id="secret" name="secret" placeholder="3e0b064c97247732a3b345ce7b2a835d928623cb2871c26db4c2539a38e61a16" autocomplete="off" required>
+                <label for="secret">Secret</label>
+                <input type="text" class="form-control" id="secret" name="secret" placeholder="3e0b064c97247732a3b345ce7b2a835d928623cb2871c26db4c2539a38e61a16" autocomplete="off" v-model="form.secret" required>
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="contractHex">Contract Hex</label>
-                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="63a61429c36b8dd380e0426bdc1d834e74a630bfd5d1118876a9149ee19833332a04d2be97b5c99c970191221c070c6704e6dabb59b17576a914b0ec0640c89cf803b8fdbd6e0183c354f71748c46888ac" autocomplete="off" required>
+                <input type="text" class="form-control" id="contractHex" name="contractHex" placeholder="63a61429c36b8dd380e0426bdc1d834e74a630bfd5d1118876a9149ee19833332a04d2be97b5c99c970191221c070c6704e6dabb59b17576a914b0ec0640c89cf803b8fdbd6e0183c354f71748c46888ac" autocomplete="off" v-model="form.contractHex" required>
             </div>
             <div class="form-group">
                 <label for="contractTransaction">Contract Transaction</label>
                 <input type="text" class="form-control" id="contractTransaction" name="contractTransaction" placeholder="010000000137afc6c25b027cb0a1db19a7aac365854796260c4c1077e3e8accae5e4c300e90300000001ffffffff02441455980100000000001976a9144d7c96b6d2360e48a07528332e537d81e068f8ba88ac00e1f50500000000000017a914195fb53333e61a415e9fda21bb991b38b5a4e1c387000000000000000001ffffffffffffffff00000000ffffffff6b483045022100b30971448c93be84c28b98ae159963e9521a84d0c3849821b6e8897d59cf4e6c0220228785cb8d1dba40752e4bd09d99b92b27bc3837b1c547f8b4ee8aba1dfec9310121035a12a086ecd1397f7f68146f4f251253b7c0092e167a1c92ff9e89cf96c68b5f"
-                       autocomplete="off" required>
+                       autocomplete="off" v-model="form.contractTransaction" required>
             </div>
         </div>
 
         <button type="submit" class="btn btn-primary">Redeem</button>
     </form>
+
+    <div class="alert alert-warning" role="alert" style="margin-top: 20px">
+        {{/*<h4 class="alert-heading">Well done!</h4>*/}}
+        <p>If you don't know the secret, you're probably the participant. You need to "Exctract Secret" first. You need the redemption transaction and secret hash the initiatior gave to you. You may also watch the blockexplorer to find the redemption transaction.</p>
+        <hr>
+        <p class="mb-0"><a href="/secret">Extract Secret here</a></p>
+    </div>
+
+<div id="response" style="margin-top: 30px">
+            <pre v-show="success == true">You're about to redeem.
+
+            Give these details to the counterparty<br></pre>
+
+    <code v-show="success == true" style="margin-bottom: 20px">
+        Contract Hex: ${result["contract_hex"]}<br>
+        Redemption Transaction: ${result["contract_transaction_hex"]}</br>
+    </code><br>
+
+    <code v-show="success == true">debug output</code>
+    <pre v-show="success == true">${result}</pre>
+    <pre v-show="error.length > 0" style="color: red">${error}</pre>
+</div>
+</form>
+
+<div id="broadcast" v-show="success == true">
+    <form @submit.prevent="processBroadcastForm">
+        <div class="form-group col-md-6">
+            <label for="contractHex">Raw transaction</label>
+            <input type="text" class="form-control" id="rawTransaction" name="rawTransaction" placeholder="" autocomplete="off" v-model="form.contractTransaction" disabled>
+        </div>
+
+        <p align="center"><button type="submit" class="btn btn-success">Broadcast/Redeem</button></p>
+    </form>
+</div>
+
+<div id="broadcastData" v-show="broadcastSuccess == true">
+    <p>Successfully redeemed</p>
+    <code>$transaction["asset_name"]} txid: $transaction["txid"]}</code>
+</div>
+
 </div>
 
 </body>
+
+<script>
+
+    function printPage(){
+        var mywindow = window.open('', 'PRINT', 'height=400,width=600');
+
+        mywindow.document.write('<html><head><title>' + document.title  + '</title>');
+        mywindow.document.write('</head><body >');
+        mywindow.document.write('<h1>' + "Atomic OTC Swap - Redemption"  + '</h1>');
+        mywindow.document.write(document.getElementById("response").innerHTML);
+        mywindow.document.write('</body></html>');
+
+        mywindow.document.close(); // necessary for IE >= 10
+        mywindow.focus(); // necessary for IE >= 10*/
+
+        mywindow.print();
+        mywindow.close();
+    }
+
+    const app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#redemption-form',
+        data() {
+            return {
+                form: {
+                    asset: "",
+                    wif: "",
+                    secret: "",
+                    contractHex: "",
+                    contractTransaction: "",
+                },
+                broadcastForm: {
+                    asset: "",
+                    rawTransaction: "",
+                },
+                success: false,
+                broadcastSuccess: false,
+                result: [],
+                transaction: [],
+                error: [],
+            };
+        },
+        methods: {
+            processForm: function () {
+                vueutil.post(this, '/api/participate', this.form, (response) => {
+                    if (response.data.success == true) {
+                        this.success = true
+                        this.result = response.data.result
+                        this.form.contractTransaction = response.data.result["contract_transaction_hex"]
+                        this.broadcastForm.asset = this.form.asset
+                        this.broadcastForm.rawTransaction = response.data.result["TransactionHex"]
+                    } else {
+                        this.error = response.data.error
+                    }
+                });
+                this.clear()
+            },
+            processBroadcastForm: function () {
+                vueutil.post(this, '/api/broadcast', this.broadcastForm, (response) => {
+                    if (response.data.success == true) {
+                        this.success = true
+                        this.broadcastSuccess = true
+                        this.transaction = response.data.result
+                    }else{
+                        this.success = false
+                        this.error = response.data.error
+                    }
+                });
+            },
+            clear: function () {
+                this.result = []
+                this.error = []
+                this.transaction = []
+            },
+        }
+    });
+
+</script>
 </html>
