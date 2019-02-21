@@ -3,9 +3,9 @@ package bcoins
 import "testing"
 
 func TestSelectCoin(t *testing.T) {
-	var tests = []struct{
+	var tests = []struct {
 		assetSymbol string
-		Name string
+		Name        string
 	}{
 		{"via", "viacoin"},
 		{"ltc", "litecoin"},

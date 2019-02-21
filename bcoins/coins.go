@@ -16,7 +16,7 @@ type Coin struct {
 	TxVersion     int32
 	MinRelayTxFee float64
 	FeePerByte    int
-	Dust int64
+	Dust          int64
 }
 
 type Insight struct {
@@ -37,7 +37,7 @@ type Network struct {
 
 var coins = map[string]Coin{
 	"via": {Name: "viacoin", Symbol: "via", Unit: "VIA", Network: &Network{Name: "viacoin", P2PKH: 0x47, P2SH: 0x21, PrivateKeyID: 0xC7, HDCoinType: 14, magic: 0xcbc6680f},
-		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2, MinRelayTxFee: 0.001, FeePerByte: 110, Dust:int64(1000),
+		Insight: &Insight{"https://explorer.viacoin.org", "https://explorer.viacoin.org/api"}, TxVersion: 2, MinRelayTxFee: 0.001, FeePerByte: 110, Dust: int64(1000),
 	},
 
 	"ltc": {Name: "litecoin", Symbol: "ltc", Unit: "LTC",

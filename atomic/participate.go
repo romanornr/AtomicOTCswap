@@ -105,8 +105,8 @@ func (cmd *participateCmd) runCommand(wif *btcutil.WIF, coin *bcoins.Coin, amoun
 		ContractRefundFee: build.refundFee.ToBTC(),
 
 		CounterPartyAddress: fmt.Sprintf("%s", cmd.counterParty1Addr.String()),
-		ContractAddress:   fmt.Sprintf("%v", build.contractP2SH),
-		ContractHex:       fmt.Sprintf("%x", build.contract),
+		ContractAddress:     fmt.Sprintf("%v", build.contractP2SH),
+		ContractHex:         fmt.Sprintf("%x", build.contract),
 
 		ContractTransactionID:  fmt.Sprintf("%x", build.contractTxHash),
 		ContractTransactionHex: fmt.Sprintf("%x", contractBuf.Bytes()),
