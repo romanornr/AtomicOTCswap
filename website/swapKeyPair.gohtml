@@ -5,15 +5,15 @@
 {{template "menu"}}
 
 
-<div class="container" id="swapkeypair-form">
+<div class="container" id="swapKeyPair-form">
 
     <h4 class="mb-3" style="color: #838B92">Choose which asset to swap</h4>
-    <form action="/api/address" method="post">
+    <form @submit.prevent="processForm">
 
         <div class="form-row">
             <div class="form-group col-md-4">
-                <label for="asset">Deposit Asset</label>
-                <select name="asset" id="asset" class="form-control" v-model="form.asset" required>
+                <label for="depositAsset">Deposit Asset</label>
+                <select name="depositAsset" id="depositAsset" class="form-control" v-model="form.depositAsset" required>
                     <option disabled selected value> -- select an option -- </option>
                     <option value="btc">Bitcoin</option>
                     <option value="via">Viacoin</option>
@@ -24,8 +24,8 @@
 
         <div class="form-row">
             <div class="form-group col-md-4">
-                <label for="asset">Receiving Asset</label>
-                <select name="asset" id="asset" class="form-control" v-model="form.asset" required>
+                <label for="receivingAsset">Receiving Asset</label>
+                <select name="receivingAsset" id="receivingAsset" class="form-control" v-model="form.receivingAsset" required>
                     <option disabled selected value> -- select an option -- </option>
                     <option value="btc">Bitcoin</option>
                     <option value="via">Viacoin</option>
@@ -42,7 +42,74 @@
         <p class="mb-0">Example: If you have viacoins and you want bitcoins, deposit your viacoins on the deposit address. You will receive bitcoins on your receiving address.</p>
     </div>
 
+    <div id="response" style="margin-top: 30px">
+        <code v-show="success == true" style="margin-bottom: 20px">
+            deposit address: ${result["deposit_address"]}<br>
+            deposit wif: ${result["deposit_wif"]}</br><br>
+            receiving address: ${result["receiving_address"]}<<br>
+            receiving wif: ${result["receiving_wif"]}<<br>
+        </code><br>
+
+        <code v-show="success == true">debug output</code>
+        <pre v-show="success == true">${result}</pre>
+        <pre v-show="error.length > 0" style="color: red">${error}</pre>
+    </div>
+
 </div>
 
 </body>
+
+<script>
+
+    function printPage(){
+        var mywindow = window.open('', 'PRINT', 'height=400,width=600');
+
+        mywindow.document.write('<html><head><title>' + document.title  + '</title>');
+        mywindow.document.write('</head><body >');
+        mywindow.document.write('<h1>' + "Atomic OTC Swap - Swap key pair"  + '</h1>');
+        mywindow.document.write(document.getElementById("response").innerHTML);
+        mywindow.document.write('</body></html>');
+
+        mywindow.document.close(); // necessary for IE >= 10
+        mywindow.focus(); // necessary for IE >= 10*/
+
+        mywindow.print();
+        mywindow.close();
+    }
+
+    const app = new Vue({
+        delimiters: ['${', '}'],
+        el: '#swapKeyPair-form',
+        data() {
+            return {
+                form: {
+                    depositAsset: "",
+                    receivingAsset: "",
+                },
+                success: false,
+                result: [],
+                error: [],
+            };
+        },
+        methods: {
+            processForm: function () {
+                console.log(this.form)
+                vueutil.post(this, '/api/swapkeypair', this.form, (response) => {
+                    if (response.data.success == true) {
+                        this.success = true
+                        this.result = response.data.result
+                    } else {
+                        this.error = response.data.error
+                    }
+                });
+                this.clear()
+            },
+            clear: function () {
+                this.result = []
+                this.error = []
+            },
+        }
+    });
+
+</script>
 </html>

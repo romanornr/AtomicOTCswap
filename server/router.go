@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/romanornr/AtomicOTCswap/swaputil"
 	"log"
 	"net/http"
 	"strconv"
@@ -22,15 +23,16 @@ type Response struct {
 func createRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler).Methods("GET")
+	r.HandleFunc("/swapkeypair", swapKeyPairSiteHandler).Methods("GET")
 	r.HandleFunc("/initiate", InitiateSiteHandler).Methods("GET")
 	r.HandleFunc("/audit", AuditSiteHandler).Methods("GET")
 	r.HandleFunc("/participate", participateSiteHandler).Methods("GET")
 	r.HandleFunc("/redeem", RedemptionSiteHandler).Methods("GET")
 	r.HandleFunc("/secret", secretSiteHandler).Methods("GET")
-	r.HandleFunc("/swapkeypair", swapKeyPairSiteHandler).Methods("GET")
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/audit", AuditHandler).Methods("POST")
+	api.HandleFunc("/swapkeypair", swapKeyPairHandler).Methods("POST")
 	api.HandleFunc("/initiate", InitiateHandler).Methods("POST")
 	api.HandleFunc("/participate", ParticipateHandler).Methods("POST")
 	api.HandleFunc("/redeem", RedemptionHandler).Methods("POST")
@@ -143,6 +145,19 @@ func swapKeyPairSiteHandler(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		fmt.Println("error swapKeyPair template")
 	}
+}
+
+func swapKeyPairHandler(w http.ResponseWriter, req *http.Request) {
+	fmt.Println(req.Form)
+	depositAsset, err := bcoins.SelectCoin(req.FormValue("depositAddress"))
+	receivingAsset, err := bcoins.SelectCoin(req.FormValue("receivingAddress"))
+	if err != nil {
+		respond(w, swaputil.SwapKeyPair{}, err)
+		return
+	}
+
+	swapKeyPair, err := swaputil.GenerateSwapKeyPair(&depositAsset, &receivingAsset)
+	respond(w, swapKeyPair, err)
 }
 
 func respond(w http.ResponseWriter, data interface{}, err error) {
