@@ -1,20 +1,47 @@
 package key
 
 import (
-	"fmt"
 	"github.com/romanornr/AtomicOTCswap/bcoins"
 	"strings"
 	"testing"
 )
 
-func TestGetAtomicSwapAddresses(t *testing.T) {
-	depositAsset, _ := bcoins.SelectCoin("via")
-	receivingAsset, _ := bcoins.SelectCoin("ltc")
+type testKeyPair struct {
+	assetSymbol   string
+	addressPrefix string
+	wifPrefix     string
+}
 
-	addresses, _ := GetAtomicSwapAddresses(&depositAsset, &receivingAsset)
+var tests = []testKeyPair{
+	{assetSymbol: "via", addressPrefix: "V", wifPrefix: "W"}, // viacoin
+	{assetSymbol: "ltc", addressPrefix: "L", wifPrefix: "T"}, // litecoin
+}
 
-	if strings.HasPrefix(addresses.DepositAddress, "V") == false {
-		fmt.Println("fail")
+// test if address and privatekey/wif have the right prefixes
+// these tests are for compressed addresses and compressed WIF keys.
+func TestSwapAddresses(t *testing.T) {
+	for _, pair := range tests {
+		asset, _ := bcoins.SelectCoin(pair.assetSymbol)
+		net := asset.Network.ChainCgfMainNetParams()
+		wif, _ := GenerateNewWIF(net)
+		address, _ := GenerateNewPublicKey(*wif, net)
+
+		// test WIF keys
+		if strings.HasPrefix(wif.String(), pair.wifPrefix) != true {
+			t.Error(
+				"For", asset.Name,
+				"expected", pair.wifPrefix,
+				"got", wif.String(),
+			)
+		}
+
+		// test addresses
+		if strings.HasPrefix(address.EncodeAddress(), pair.addressPrefix) != true {
+			t.Error(
+				"For", asset.Name,
+				"expected", pair.wifPrefix,
+				"got", wif.String(),
+			)
+		}
 	}
-	fmt.Println(addresses)
 }
