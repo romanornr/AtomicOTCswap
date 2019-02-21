@@ -24,35 +24,36 @@ func GenerateNewPublicKey(wif btcutil.WIF, net *chaincfg.Params) (*btcutil.Addre
 	return pk, err
 }
 
-type SwapAddresses struct {
+type SwapKeyPair struct {
 	DepositAddress   string `json:"deposit_address"`
 	ReceivingAddress string `json:"receiving_address"`
 	DepositWif       string `json:"deposit_wif"`
 	ReceivingWif     string `json:"receiving_wif"`
 }
 
-func GetAtomicSwapAddresses(depositAsset *bcoins.Coin, receivingAsset *bcoins.Coin) (swapAddresses SwapAddresses, err error) {
+// generate key pair for the deposit assset and receiving asset. Return a SwapKeyPair struct
+func GenerateSwapKeyPair(depositAsset *bcoins.Coin, receivingAsset *bcoins.Coin) (swapKeyPair SwapKeyPair, err error) {
 	depositWif, err := GenerateNewWIF(depositAsset.Network.ChainCgfMainNetParams())
 	if err != nil {
-		return swapAddresses, err
+		return swapKeyPair, err
 	}
 
 	receivingWif, err := GenerateNewWIF(receivingAsset.Network.ChainCgfMainNetParams())
 	if err != nil {
-		return swapAddresses, err
+		return swapKeyPair, err
 	}
 
 	depositAddress, err := GenerateNewPublicKey(*depositWif, depositAsset.Network.ChainCgfMainNetParams())
 	if err != nil {
-		return swapAddresses, err
+		return swapKeyPair, err
 	}
 
 	receivingAddress, err := GenerateNewPublicKey(*receivingWif, receivingAsset.Network.ChainCgfMainNetParams())
 	if err != nil {
-		return swapAddresses, err
+		return swapKeyPair, err
 	}
 
-	return SwapAddresses{
+	return SwapKeyPair{
 		DepositAddress:   depositAddress.EncodeAddress(),
 		DepositWif:       depositWif.String(),
 		ReceivingAddress: receivingAddress.EncodeAddress(),
