@@ -1,22 +1,28 @@
 package bcoins
 
-import (
-	"fmt"
-	btcutil "github.com/viacoin/viautil"
-	"testing"
-)
+import "testing"
 
-var viacoin = Coin{}
+func TestSelectCoin(t *testing.T) {
+	var tests = []struct{
+		assetSymbol string
+		Name string
+	}{
+		{"via", "viacoin"},
+		{"ltc", "litecoin"},
+	}
 
-func TestBtcutil_GetBtcUtil(t *testing.T) {
-	viacoin.Symbol = "xzc"
+	for _, test := range tests {
+		asset, err := SelectCoin(test.assetSymbol)
+		if err != nil {
+			t.Errorf("Test failed: %s", err)
+		}
 
-	input, _ := btcutil.NewAmount(0.001)
-	expected := "0.001 VIA"
-
-	fmt.Println(input) // should be 0.001 VIA not 1000
-
-	if input.String() != expected {
-		t.Errorf("error expected %v but got %v instead\n", expected, input)
+		if asset.Name != test.Name {
+			t.Error(
+				"For", test.Name,
+				"expected", test.Name,
+				"got", asset.Name,
+			)
+		}
 	}
 }
