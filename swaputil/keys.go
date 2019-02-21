@@ -1,4 +1,4 @@
-package key
+package swaputil
 
 import (
 	"github.com/romanornr/AtomicOTCswap/bcoins"

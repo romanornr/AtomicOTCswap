@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"github.com/romanornr/AtomicOTCswap/key"
+	"github.com/romanornr/AtomicOTCswap/swaputil"
 
 	"github.com/btcsuite/golangcrypto/ripemd160"
 	"github.com/go-errors/errors"
@@ -48,7 +48,7 @@ type builtContract struct {
 
 func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error) {
 
-	refundAddress, _ := key.GenerateNewPublicKey(*wif, args.coin.Network.ChainCgfMainNetParams())
+	refundAddress, _ := swaputil.GenerateNewPublicKey(*wif, args.coin.Network.ChainCgfMainNetParams())
 	refundAddr, _ := btcutil.DecodeAddress(refundAddress.EncodeAddress(), args.coin.Network.ChainCgfMainNetParams())
 
 	refundAddrHash, ok := refundAddr.(interface {
@@ -106,7 +106,7 @@ func buildContract(args *contractArgs, wif *btcutil.WIF) (*builtContract, error)
 }
 
 func fundAndSignRawTransaction(tx *wire.MsgTx, wif *btcutil.WIF, amount btcutil.Amount, coin *bcoins.Coin) (*wire.MsgTx, btcutil.Amount, bool, error) {
-	sourceAddress, _ := key.GenerateNewPublicKey(*wif, coin.Network.ChainCgfMainNetParams())
+	sourceAddress, _ := swaputil.GenerateNewPublicKey(*wif, coin.Network.ChainCgfMainNetParams())
 	sourcePKScript, err := txscript.PayToAddrScript(sourceAddress.AddressPubKeyHash())
 	if err != nil {
 		return tx, amount, false, err
