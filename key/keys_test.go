@@ -6,13 +6,11 @@ import (
 	"testing"
 )
 
-type testKeyPair struct {
+var tests = []struct {
 	assetSymbol   string
 	addressPrefix string
 	wifPrefix     string
-}
-
-var tests = []testKeyPair{
+}{
 	{assetSymbol: "via", addressPrefix: "V", wifPrefix: "W"}, // viacoin
 	{assetSymbol: "ltc", addressPrefix: "L", wifPrefix: "T"}, // litecoin
 }
@@ -20,6 +18,7 @@ var tests = []testKeyPair{
 // test if address and privatekey/wif have the right prefixes
 // these tests are for compressed addresses and compressed WIF keys.
 func TestSwapAddresses(t *testing.T) {
+
 	for _, pair := range tests {
 		asset, _ := bcoins.SelectCoin(pair.assetSymbol)
 		net := asset.Network.ChainCgfMainNetParams()
