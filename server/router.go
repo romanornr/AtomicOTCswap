@@ -27,7 +27,7 @@ func createRouter() *mux.Router {
 	r.HandleFunc("/participate", participateSiteHandler).Methods("GET")
 	r.HandleFunc("/redeem", RedemptionSiteHandler).Methods("GET")
 	r.HandleFunc("/secret", secretSiteHandler).Methods("GET")
-	r.HandleFunc("/address", addressSiteHandler).Methods("GET")
+	r.HandleFunc("/swapkeypair", swapKeyPairSiteHandler).Methods("GET")
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/audit", AuditHandler).Methods("POST")
@@ -138,10 +138,10 @@ func broadcastHandler(w http.ResponseWriter, req *http.Request) {
 	respond(w, transaction, err)
 }
 
-func addressSiteHandler(w http.ResponseWriter, _ *http.Request) {
-	err := tpl.ExecuteTemplate(w, "address.gohtml", nil)
+func swapKeyPairSiteHandler(w http.ResponseWriter, _ *http.Request) {
+	err := tpl.ExecuteTemplate(w, "swapKeyPair.gohtml", nil)
 	if err != nil {
-		fmt.Println("error address template")
+		fmt.Println("error swapKeyPair template")
 	}
 }
 
