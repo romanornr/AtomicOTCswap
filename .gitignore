@@ -2,3 +2,6 @@ vendor/*
 .idea/*
 .vscode/*
 debug
+go.mod
+go.sum
+AtomicOTCswap
