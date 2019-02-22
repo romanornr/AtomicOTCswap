@@ -3,10 +3,11 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/romanornr/AtomicOTCswap/swaputil"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/romanornr/AtomicOTCswap/swaputil"
 
 	"github.com/gorilla/mux"
 	"github.com/romanornr/AtomicOTCswap/atomic"
@@ -149,8 +150,8 @@ func swapKeyPairSiteHandler(w http.ResponseWriter, _ *http.Request) {
 
 func swapKeyPairHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.Form)
-	depositAsset, err := bcoins.SelectCoin(req.FormValue("depositAddress"))
-	receivingAsset, err := bcoins.SelectCoin(req.FormValue("receivingAddress"))
+	depositAsset, err := bcoins.SelectCoin(req.FormValue("depositAsset"))
+	receivingAsset, err := bcoins.SelectCoin(req.FormValue("receivingAsset"))
 	if err != nil {
 		respond(w, swaputil.SwapKeyPair{}, err)
 		return
