@@ -28,14 +28,14 @@ func ExtractSecret(redemptionTransaction string, secretHash string) (extractedSe
 	var redemptionTx wire.MsgTx
 	err = redemptionTx.Deserialize(bytes.NewReader(redemptionTxBytes))
 	if err != nil {
-		return extractedSecret, fmt.Errorf("failed to decode redemptioon transaction: %v", err)
+		return extractedSecret, fmt.Errorf("failed to decode redemption transaction: %v", err)
 	}
 
 	secret, err := hex.DecodeString(secretHash)
 	if err != nil {
 		return extractedSecret, errors.New("secret hash must be hex encoded")
 	}
-	if len(secretHash) != sha256.Size {
+	if len(secret) != sha256.Size {
 		return extractedSecret, errors.New("secret hash wrong size")
 	}
 

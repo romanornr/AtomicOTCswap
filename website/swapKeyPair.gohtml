@@ -99,7 +99,6 @@
         },
         methods: {
             processForm: function () {
-                console.log(this.form)
                 vueutil.post(this, '/api/swapkeypair', this.form, (response) => {
                     if (response.data.success == true) {
                         this.success = true
