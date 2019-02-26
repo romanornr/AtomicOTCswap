@@ -46,10 +46,10 @@
 
     <div id="response" style="margin-top: 30px">
         <code v-show="success == true" style="margin-bottom: 20px">
-            ${form.depositAsset} deposit address: ${result["deposit_address"]}<br>
-            ${form.depositAsset} deposit wif: ${result["deposit_wif"]}</br><br>
-            ${form.receivingAsset} receiving address: ${result["receiving_address"]}<br>
-            ${form.receivingAsset} receiving wif: ${result["receiving_wif"]}<br>
+            ${form.depositAsset | uppercase } deposit address: ${result["deposit_address"]}<br>
+            ${form.depositAsset | uppercase } deposit wif: ${result["deposit_wif"]}</br><br>
+            ${form.receivingAsset | uppercase } receiving address: ${result["receiving_address"]}<br>
+            ${form.receivingAsset | uppercase } receiving wif: ${result["receiving_wif"]}<br>
         </code><br>
 
         <code v-show="success == true">debug output</code>
@@ -78,6 +78,10 @@
         mywindow.print();
         mywindow.close();
     }
+
+    Vue.filter('uppercase', function (value) {
+        return value.toUpperCase()
+    });
 
     const app = new Vue({
         delimiters: ['${', '}'],
