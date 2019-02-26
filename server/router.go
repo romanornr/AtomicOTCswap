@@ -149,7 +149,6 @@ func swapKeyPairSiteHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func swapKeyPairHandler(w http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.Form)
 	depositAsset, err := bcoins.SelectCoin(req.FormValue("depositAsset"))
 	receivingAsset, err := bcoins.SelectCoin(req.FormValue("receivingAsset"))
 	if err != nil {

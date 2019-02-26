@@ -50,6 +50,8 @@
             receiving wif: ${result["receiving_wif"]}<<br>
         </code><br>
 
+        <p v-show="success == true" align="center"><button type="button" class="btn btn-outline-success" onclick="printPage()">Print/Save SwapKeyPairs</button></p>
+
         <code v-show="success == true">debug output</code>
         <pre v-show="success == true">${result}</pre>
         <pre v-show="error.length > 0" style="color: red">${error}</pre>
