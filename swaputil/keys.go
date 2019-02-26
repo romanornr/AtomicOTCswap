@@ -26,8 +26,8 @@ func GenerateNewPublicKey(wif btcutil.WIF, net *chaincfg.Params) (*btcutil.Addre
 
 type SwapKeyPair struct {
 	DepositAddress   string `json:"deposit_address"`
-	ReceivingAddress string `json:"receiving_address"`
 	DepositWif       string `json:"deposit_wif"`
+	ReceivingAddress string `json:"receiving_address"`
 	ReceivingWif     string `json:"receiving_wif"`
 }
 
