@@ -42,15 +42,15 @@
         <p class="mb-0">Example: If you have viacoins and you want bitcoins, deposit your viacoins on the deposit address. You will receive bitcoins on your receiving address.</p>
     </div>
 
+    <p v-show="success == true" align="center"><button type="button" class="btn btn-outline-success" onclick="printPage()">Print/Save SwapKeyPairs</button></p>
+
     <div id="response" style="margin-top: 30px">
         <code v-show="success == true" style="margin-bottom: 20px">
-            deposit address: ${result["deposit_address"]}<br>
-            deposit wif: ${result["deposit_wif"]}</br><br>
-            receiving address: ${result["receiving_address"]}<<br>
-            receiving wif: ${result["receiving_wif"]}<<br>
+            ${form.depositAsset} deposit address: ${result["deposit_address"]}<br>
+            ${form.depositAsset} deposit wif: ${result["deposit_wif"]}</br><br>
+            ${form.receivingAsset} receiving address: ${result["receiving_address"]}<br>
+            ${form.receivingAsset} receiving wif: ${result["receiving_wif"]}<br>
         </code><br>
-
-        <p v-show="success == true" align="center"><button type="button" class="btn btn-outline-success" onclick="printPage()">Print/Save SwapKeyPairs</button></p>
 
         <code v-show="success == true">debug output</code>
         <pre v-show="success == true">${result}</pre>

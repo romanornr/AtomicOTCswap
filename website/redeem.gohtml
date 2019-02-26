@@ -10,7 +10,7 @@
 
         <div class="form-row">
             <div class="form-group col-md-4">
-                <label for="asset">Asset</label>
+                <label for="asset">Asset you want to redeem (receiving asset)</label>
                 <select name="asset" id="asset" class="form-control" v-model="form.asset" required>
                     <option disabled selected value> -- select an option -- </option>
                     <option value="btc">Bitcoin</option>
@@ -21,7 +21,7 @@
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label for="wif">Your WIF</label>
+                <label for="wif">Your Receiving WIF</label>
                 <input type="text" class="form-control" id="wif" name="wif" placeholder="" autocomplete="off" v-model="form.wif" required>
             </div>
         </div>
