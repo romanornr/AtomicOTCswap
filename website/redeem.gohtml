@@ -6,7 +6,7 @@
 
 
 <div class="container" id="redemption-form">
-    <form action="/api/redeem" method="post">
+    <form @submit.prevent="processForm">
 
         <div class="form-row">
             <div class="form-group col-md-4">
@@ -61,8 +61,7 @@
             Give these details to the counterparty<br></pre>
 
     <code v-show="success == true" style="margin-bottom: 20px">
-        Contract Hex: ${result["contract_hex"]}<br>
-        Redemption Transaction: ${result["contract_transaction_hex"]}</br>
+        Redemption Transaction: ${result["transaction_hex"]}</br>
     </code><br>
 
     <code v-show="success == true">debug output</code>
@@ -75,7 +74,7 @@
     <form @submit.prevent="processBroadcastForm">
         <div class="form-group col-md-6">
             <label for="contractHex">Raw transaction</label>
-            <input type="text" class="form-control" id="rawTransaction" name="rawTransaction" placeholder="" autocomplete="off" v-model="form.contractTransaction" disabled>
+            <input type="text" class="form-control" id="rawTransaction" name="rawTransaction" placeholder="" autocomplete="off" v-model="result.transaction_hex" disabled>
         </div>
 
         <p align="center"><button type="submit" class="btn btn-success">Broadcast/Redeem</button></p>
@@ -84,7 +83,7 @@
 
 <div id="broadcastData" v-show="broadcastSuccess == true">
     <p>Successfully redeemed</p>
-    <code>$transaction["asset_name"]} txid: $transaction["txid"]}</code>
+    <code>${transaction["asset_name"]} txid: ${transaction["txid"]}</code>
 </div>
 
 </div>
@@ -134,13 +133,14 @@
         },
         methods: {
             processForm: function () {
-                vueutil.post(this, '/api/participate', this.form, (response) => {
+                this.success = false
+                vueutil.post(this, '/api/redeem', this.form, (response) => {
                     if (response.data.success == true) {
                         this.success = true
                         this.result = response.data.result
                         this.form.contractTransaction = response.data.result["contract_transaction_hex"]
                         this.broadcastForm.asset = this.form.asset
-                        this.broadcastForm.rawTransaction = response.data.result["TransactionHex"]
+                        this.broadcastForm.rawTransaction = this.result["transaction_hex"]
                     } else {
                         this.error = response.data.error
                     }

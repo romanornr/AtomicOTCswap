@@ -33,7 +33,7 @@
             </div>
 
             <div class="form-group col-md-6">
-                <label for="contractHex">Counter Party Address</label>
+                <label for="contractHex">Counter Party Receiving Address</label>
                 <input type="text" class="form-control" id="counterPartyAddr" name="counterPartyAddr" placeholder="" autocomplete="off" v-model="form.counterPartyAddr" required>
             </div>
         </div>
@@ -76,7 +76,7 @@
 
     <div id="broadcastData" v-show="broadcastSuccess == true">
         <p>Atomicswap successfully initialized. The counterparty can participate now.</p>
-        <code>$transaction["asset_name"]} txid: $transaction["txid"]}</code>
+        <code>${transaction["asset_name"]} txid: ${transaction["txid"]}</code>
     </div>
 
 </div>
