@@ -20,7 +20,7 @@
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label for="contractHex">Your Deposit WIF</label>
+                <label for="contractHex">Your ${form.asset | uppercase } Deposit WIF</label>
                 <input type="text" class="form-control" id="wif" name="wif" placeholder="" autocomplete="off" v-model="form.wif" required>
             </div>
         </div>
@@ -99,6 +99,10 @@
         mywindow.print();
         mywindow.close();
     }
+
+    Vue.filter('uppercase', function (value) {
+        return value.toUpperCase()
+    });
 
     const app = new Vue({
         delimiters: ['${', '}'],
