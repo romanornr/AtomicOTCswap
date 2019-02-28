@@ -1,6 +1,6 @@
 # AtomicOTCswap
 #### Atomic Swap tool bitcoin &amp; altcoins without the need of full nodes on-chain
-
+###### This atomic swap tool is heavily based on Decred's atomic swap tool: https://github.com/decred/atomicswap
 
 ##### Supported assets
 - [ ] Bitcoin ([Bitcoin Core](https://github.com/bitcoin/bitcoin))
@@ -19,7 +19,12 @@ One could easily have his funds "stuck". Only use with small amounts, this tool 
 The author takes no responsibility
 <br><br>
 This project is not finished, it lacks unit testing and this tool written by a Golang newbie :) <br>
+I still need to do a lot of refactoring & cleaning up the code base. It's far from finished but it works :) </br>
+
 Feel free to create pull requests and help improving. 
+
+![alt text](https://github.com/romanornr/AtomicOTCswap/blob/master/screenshots/1.png?raw=true)
+
 
 ###### API
 The atomic swap tool comes with an API so others can build on top of it or for example host the atomic swap server and let users connect externily and preferably connect to their own host.
