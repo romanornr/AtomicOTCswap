@@ -13,8 +13,10 @@
                 <label for="asset">Asset you want to redeem (receiving asset)</label>
                 <select name="asset" id="asset" class="form-control" v-model="form.asset" required>
                     <option disabled selected value> -- select an option -- </option>
+                    <option value="btc">Bitcoin</option>
                     <option value="via">Viacoin</option>
                     <option value="ltc">Litecoin</option>
+                    <option value="btct">Bitcoin Testnet</option>
                 </select>
             </div>
         </div>

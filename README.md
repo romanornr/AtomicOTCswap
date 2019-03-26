@@ -3,13 +3,13 @@
 ###### This atomic swap tool is heavily based on Decred's atomic swap tool: https://github.com/decred/atomicswap
 
 ##### Supported assets
-- [ ] Bitcoin ([Bitcoin Core](https://github.com/bitcoin/bitcoin))
+- [x] Bitcoin ([Bitcoin Core](https://github.com/bitcoin/bitcoin))
 - [ ] Decred ([dcrwallet](https://github.com/decred/dcrwallet))
 - [x] Viacoin ([Viacoin Core](https://github.com/viacoin/viacoin))
 - [x] Litecoin ([Litecoin Core](https://github.com/litecoin-project/litecoin))
 - [ ] Vertcoin ([Vertcoin Core](https://github.com/vertcoin/vertcoin))
 - [ ] Zcoin ([Zcoin Core](https://github.com/zcoinofficial/zcoin))
-- [ ] Bitcoin Testnet ([Bitcoin Core](https://github.com/bitcoin/bitcoin))
+- [x] Bitcoin Testnet ([Bitcoin Core](https://github.com/bitcoin/bitcoin))
 - [ ] Decred Tesnet ([dcrwallet](https://github.com/decred/dcrwallet))
 - [ ] Litecoin Tesnet ([Litecoin Core](https://github.com/litecoin-project/litecoin))
 

@@ -15,8 +15,10 @@
                 <label for="depositAsset">Deposit Asset</label>
                 <select name="depositAsset" id="depositAsset" class="form-control" v-model="form.depositAsset" required>
                     <option disabled selected value> -- select an option -- </option>
+                    <option value="btc">Bitcoin</option>
                     <option value="via">Viacoin</option>
                     <option value="ltc">Litecoin</option>
+                    <option value="btct">Bitcoin Testnet</option>
                 </select>
             </div>
         </div>
@@ -26,8 +28,10 @@
                 <label for="receivingAsset">Receiving Asset</label>
                 <select name="receivingAsset" id="receivingAsset" class="form-control" v-model="form.receivingAsset" required>
                     <option disabled selected value> -- select an option -- </option>
+                    <option value="btc">Bitcoin</option>
                     <option value="via">Viacoin</option>
                     <option value="ltc">Litecoin</option>
+                    <option value="btct">Bitcoin Testnet</option>
                 </select>
             </div>
         </div>
